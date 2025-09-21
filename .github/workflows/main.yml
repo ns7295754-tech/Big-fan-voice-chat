@@ -1,56 +1,51 @@
-name: Flutter CI
+name: big_fun_voice_chat
+description: A voice chat app with rooms, wallet, gifts, and profiles.
+publish_to: 'none'
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:   # Allow manual trigger from GitHub Actions tab
+version: 1.0.0+1
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+environment:
+  sdk: ">=3.0.0 <5.0.0"
 
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
+dependencies:
+  flutter:
+    sdk: flutter
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: "17"
-          distribution: "temurin"
+  # Firebase
+  firebase_core: ^2.30.1
+  firebase_auth: ^4.20.0
+  cloud_firestore: ^4.17.5
 
-      - name: Install Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.19.6"
+  # Voice/Video (Agora)
+  agora_rtc_engine: ^6.3.2
 
-      - name: Get dependencies
-        run: flutter pub get
+  # State management
+  provider: ^6.1.2
 
-      - name: Decode keystore
-        run: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/my-release-key.jks
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+  # UI helpers
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10+1
 
-      - name: Create key.properties
-        run: |
-          echo "storeFile=my-release-key.jks" >> android/key.properties
-          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+  # Other
+  shared_preferences: ^2.3.2
+  intl: ^0.19.0
 
-      - name: Add google-services.json
-        run: |
-          echo "${{ secrets.FIREBASE_CONFIG }}" | base64 --decode > android/app/google-services.json
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
 
-      - name: Build APK
-        run: flutter build apk --release
+flutter:
+  uses-material-design: true
 
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v3
-        with:
-          name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/gifts/
+
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
+        - asset: assets/fonts/Roboto-Bold.ttf
+          weight: 700
