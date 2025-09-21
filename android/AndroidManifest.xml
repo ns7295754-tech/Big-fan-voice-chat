@@ -2,9 +2,9 @@
     package="com.bigfun.voicechat">
 
     <application
-        android:label="BigFun"
-        android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:label="BigFun VoiceChat"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher">
 
         <activity
             android:name=".MainActivity"
@@ -15,16 +15,22 @@
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
+            <!-- Normal theme meta-data -->
+            <meta-data
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
 
+            <!-- Flutter activity -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
 
-        <!-- Flutter needs this -->
+        <!-- Flutter meta-data -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
     </application>
 </manifest>
