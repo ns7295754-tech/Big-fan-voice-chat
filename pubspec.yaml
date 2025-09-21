@@ -1,0 +1,51 @@
+name: big_fun_voice_chat
+description: A voice chat app with rooms, wallet, gifts, and profiles.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase
+  firebase_core: ^2.15.1
+  firebase_auth: ^4.8.0
+  cloud_firestore: ^4.9.0
+
+  # Voice/Video (Agora)
+  agora_rtc_engine: ^6.2.6
+
+  # State management
+  provider: ^6.0.5
+
+  # UI helpers
+  google_fonts: ^6.1.0
+  flutter_svg: ^2.0.7
+
+  # Other
+  shared_preferences: ^2.2.2
+  intl: ^0.18.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/gifts/
+
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
+        - asset: assets/fonts/Roboto-Bold.ttf
+          weight: 700
