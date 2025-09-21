@@ -1,0 +1,2 @@
+rootProject.name = 'big_fun_voice_chat'
+include ':app'
