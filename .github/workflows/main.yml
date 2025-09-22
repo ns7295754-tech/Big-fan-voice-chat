@@ -1,4 +1,4 @@
-# Updated GitHub Actions workflow
+# Automatic Flutter Project Migration and APK Build
 name: Flutter CI - Build APK
 
 on:
@@ -14,35 +14,74 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Set up Java 11
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '11'
 
+      # Set up Flutter
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.3'
           channel: 'stable'
 
-      - name: Install dependencies
-        run: flutter pub get
+      # Extract app name from pubspec.yaml
+      - name: Get app name from pubspec.yaml
+        id: get_app_name
+        run: |
+          APP_NAME=$(grep '^name:' pubspec.yaml | sed 's/name: //' | tr -d ' ')
+          echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
+          echo "App name: $APP_NAME"
 
+      # Create new Flutter project structure
+      - name: Create new Flutter project structure
+        run: |
+          echo "Creating new Flutter project..."
+          flutter create --project-name ${{ steps.get_app_name.outputs.app_name }} temp_project
+          
+          echo "Copying your code..."
+          cp -r lib/ temp_project/lib/ || echo "No lib directory found"
+          cp -r assets/ temp_project/assets/ || echo "No assets directory found"
+          cp pubspec.yaml temp_project/pubspec.yaml
+          cp -r test/ temp_project/test/ || echo "No test directory found"
+          
+          echo "Replacing old project structure..."
+          rm -rf android/ ios/ web/ linux/ macos/ windows/ || echo "Some platforms not found"
+          cp -r temp_project/* .
+          rm -rf temp_project/
+          
+          echo "Project migration completed!"
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          echo "Installing dependencies..."
+          flutter pub get
+
+      # Run tests (if test directory exists)
       - name: Run tests (if test directory exists)
         run: |
           if [ -d "test" ]; then
+            echo "Running tests..."
             flutter test
           else
             echo "No test directory found, skipping tests"
           fi
 
+      # Build APK (split per ABI for smaller size)
       - name: Build APK (split per ABI for smaller size)
-        run: flutter build apk --release --split-per-abi
+        run: |
+          echo "Building APK..."
+          flutter build apk --release --split-per-abi
 
+      # Upload APK artifacts
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -50,113 +89,59 @@ jobs:
           path: build/app/outputs/flutter-apk/*.apk
 
 ---
-# android/gradle/wrapper/gradle-wrapper.properties
-distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists
-distributionUrl=https\://services.gradle.org/distributions/gradle-7.6.3-all.zip
+
+# Manual Migration Script (if you want to do it locally)
+
+#!/bin/bash
+# migrate_flutter_project.sh
+
+echo "Starting Flutter project migration..."
+
+# 1. Backup your code
+echo "Backing up code..."
+mkdir -p ../backup
+cp -r lib/ ../backup/lib_backup/ 2>/dev/null || echo "No lib directory found"
+cp pubspec.yaml ../backup/pubspec_backup.yaml
+cp -r assets/ ../backup/assets_backup/ 2>/dev/null || echo "No assets directory found"
+cp -r test/ ../backup/test_backup/ 2>/dev/null || echo "No test directory found"
+
+# 2. Get app name from pubspec.yaml
+APP_NAME=$(grep '^name:' pubspec.yaml | sed 's/name: //' | tr -d ' ')
+echo "App name: $APP_NAME"
+
+# 3. Create new project
+echo "Creating new project..."
+cd ..
+flutter create --project-name $APP_NAME new_project
+
+# 4. Copy your code back
+echo "Copying code back..."
+cp -r backup/lib_backup/* new_project/lib/ 2>/dev/null || echo "Could not copy lib"
+cp backup/pubspec_backup.yaml new_project/pubspec.yaml
+cp -r backup/assets_backup/* new_project/assets/ 2>/dev/null || echo "Could not copy assets"
+cp -r backup/test_backup/* new_project/test/ 2>/dev/null || echo "Could not copy test"
+
+# 5. Replace old project
+echo "Replacing old project..."
+OLD_PROJECT_NAME=$(basename "$PWD")
+cd ..
+rm -rf $OLD_PROJECT_NAME/
+mv new_project/ $OLD_PROJECT_NAME/
+
+echo "Migration completed! 🎉"
+echo "Now run 'flutter pub get' and 'flutter build apk --release'"
 
 ---
-# android/build.gradle
-buildscript {
-    ext.kotlin_version = '1.7.10'
-    repositories {
-        google()
-        mavenCentral()
-    }
 
-    dependencies {
-        classpath 'com.android.tools.build:gradle:7.4.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
+# Helper Tips
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
+# If you have custom Android configurations:
+# Copy custom permissions or configurations from android/app/src/main/AndroidManifest.xml
+# to the new project
 
-rootProject.buildDir = '../build'
-subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
-    project.evaluationDependsOn(':app')
-}
+# If you have native dependencies:
+# Make sure all dependencies are in pubspec.yaml
+# Run flutter clean after flutter pub get
 
-tasks.register("clean", Delete) {
-    delete rootProject.buildDir
-}
-
----
-# android/app/build.gradle
-def localProperties = new Properties()
-def localPropertiesFile = rootProject.file('local.properties')
-if (localPropertiesFile.exists()) {
-    localPropertiesFile.withReader('UTF-8') { reader ->
-        localProperties.load(reader)
-    }
-}
-
-def flutterRoot = localProperties.getProperty('flutter.sdk')
-if (flutterRoot == null) {
-    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
-}
-
-def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
-if (flutterVersionCode == null) {
-    flutterVersionCode = '1'
-}
-
-def flutterVersionName = localProperties.getProperty('flutter.versionName')
-if (flutterVersionName == null) {
-    flutterVersionName = '1.0'
-}
-
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
-
-android {
-    namespace "com.example.your_app_name" // Update this to match your app
-    compileSdk 34
-    ndkVersion flutter.ndkVersion
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
-
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-    }
-
-    defaultConfig {
-        applicationId "com.example.your_app_name" // Update this to match your app
-        minSdkVersion flutter.minSdkVersion
-        targetSdkVersion flutter.targetSdkVersion
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.debug
-        }
-    }
-}
-
-flutter {
-    source '../..'
-}
-
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-}
+# For iOS (if needed):
+# Copy custom configurations from ios/Runner/Info.plist
