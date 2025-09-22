@@ -2,16 +2,12 @@
     package="com.bigfun.voicechat">
 
     <application
-        android:label="BigFun VoiceChat"
         android:name="${applicationName}"
+        android:label="BigFun VoiceChat"
         android:icon="@mipmap/ic_launcher">
 
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTop"
-            android:theme="@style/LaunchTheme"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
 
@@ -22,12 +18,13 @@
 
             <!-- Flutter activity -->
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
         </activity>
 
-        <!-- Flutter meta-data -->
+        <!-- Flutter V2 embedding -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
