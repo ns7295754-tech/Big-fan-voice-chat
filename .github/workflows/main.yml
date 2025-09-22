@@ -32,8 +32,13 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run tests
-        run: flutter test
+      - name: Run tests (if test directory exists)
+        run: |
+          if [ -d "test" ]; then
+            flutter test
+          else
+            echo "No test directory found, skipping tests"
+          fi
 
       - name: Build APK (split per ABI for smaller size)
         run: flutter build apk --release --split-per-abi
