@@ -33,9 +33,12 @@ class HomePage extends StatelessWidget {
       ),
       body: Center(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text("🎧 Welcome to BigFun Voice Chat!"),
+            const Icon(Icons.account_circle, size: 120),
+            const SizedBox(height: 12),
+            const Text("👋 Welcome to BigFun Voice Chat"),
             const SizedBox(height: 20),
             Text("Agora App ID: ${AgoraConfig.appId}"),
             const SizedBox(height: 20),
