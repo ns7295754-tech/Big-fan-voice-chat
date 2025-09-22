@@ -17,7 +17,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.6' # তোমার প্রয়োজন অনুযায়ী পরিবর্তন করতে পারো
+          flutter-version: '3.24.3' # upgraded Flutter (Dart 3.5.4 inside)
 
       - name: Get dependencies
         run: flutter pub get
