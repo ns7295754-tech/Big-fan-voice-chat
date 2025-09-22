@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'config/agora_config.dart';
 
 void main() {
   runApp(const BigFunApp());
@@ -10,56 +11,42 @@ class BigFunApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'BigFun',
+      title: 'BigFun Voice',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.blue),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const HomeScreen(),
-        '/auth': (context) => const PlaceholderScreen('Auth'),
-        '/inbox': (context) => const PlaceholderScreen('Inbox'),
-        '/profile': (context) => const PlaceholderScreen('Profile'),
-        '/voice': (context) => const PlaceholderScreen('Voice'),
-        '/wallet': (context) => const PlaceholderScreen('Wallet'),
-      },
+      theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        useMaterial3: true,
+      ),
+      home: const HomePage(),
     );
   }
 }
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('BigFun Home')),
+      appBar: AppBar(
+        title: const Text("BigFun Voice Home"),
+      ),
       body: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.account_circle, size: 120),
-            const SizedBox(height: 12),
+            const Text("🎧 Welcome to BigFun Voice Chat!"),
+            const SizedBox(height: 20),
+            Text("Agora App ID: ${AgoraConfig.appId}"),
+            const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/auth'),
-              child: const Text('Go to Auth'),
+              onPressed: () {
+                // TODO: Navigate to voice chat screen
+              },
+              child: const Text("Join Voice Room"),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class PlaceholderScreen extends StatelessWidget {
-  final String name;
-  const PlaceholderScreen(this.name, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(name)),
-      body: Center(
-        child: Text('$name screen (placeholder)'),
       ),
     );
   }
