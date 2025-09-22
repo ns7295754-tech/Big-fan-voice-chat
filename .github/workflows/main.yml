@@ -1,66 +1,31 @@
-import 'package:flutter/material.dart';
+name: Build APK
 
-void main() {
-  runApp(const BigFunApp());
-}
+on:
+  push:
+    branches:
+      - main
 
-class BigFunApp extends StatelessWidget {
-  const BigFunApp({super.key});
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'BigFun',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.blue),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const HomeScreen(),
-        '/auth': (context) => const PlaceholderScreen('Auth'),
-        '/inbox': (context) => const PlaceholderScreen('Inbox'),
-        '/profile': (context) => const PlaceholderScreen('Profile'),
-        '/voice': (context) => const PlaceholderScreen('Voice'),
-        '/wallet': (context) => const PlaceholderScreen('Wallet'),
-      },
-    );
-  }
-}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('BigFun Home')),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.account_circle, size: 120),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/auth'),
-              child: const Text('Go to Auth'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
 
-class PlaceholderScreen extends StatelessWidget {
-  final String name;
-  const PlaceholderScreen(this.name, {super.key});
+      - name: Get dependencies
+        run: flutter pub get
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(name)),
-      body: Center(
-        child: Text('$name screen (placeholder)'),
-      ),
-    );
-  }
-}
+      - name: Build APK
+        run: flutter build apk --release
