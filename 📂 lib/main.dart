@@ -1,26 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'auth_screen.dart';
+import 'inbox_screen.dart';
+import 'voice_chat_screen.dart';
+import 'wallet_screen.dart';
+import 'gift_screen.dart';
+import 'profile_screen.dart';
 
-// Import all screens
-import 'screens/splash_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/profile_screen.dart';
-import 'screens/wallet_screen.dart';
-import 'screens/gifts_screen.dart';
-import 'screens/voice_rooms_screen.dart';
-
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Firebase (requires android/app/google-services.json)
-  await Firebase.initializeApp();
-
-  runApp(const MyApp());
+void main() {
+  runApp(const BigFunApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class BigFunApp extends StatelessWidget {
+  const BigFunApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,18 +19,17 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'BigFun',
       theme: ThemeData(
-        primarySwatch: Colors.yellow,
+        primarySwatch: Colors.blue,
       ),
-      // App starts with SplashScreen
-      initialRoute: '/',
+      // The first screen that will be shown when the app starts
+      home: const AuthScreen(),
       routes: {
-        '/': (context) => const SplashScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/home': (context) => const HomeScreen(),
-        '/profile': (context) => const ProfileScreen(),
+        '/auth': (context) => const AuthScreen(),
+        '/inbox': (context) => const InboxScreen(),
+        '/voice': (context) => const VoiceChatScreen(),
         '/wallet': (context) => const WalletScreen(),
-        '/gifts': (context) => const GiftsScreen(),
-        '/voiceRooms': (context) => const VoiceRoomsScreen(),
+        '/gift': (context) => const GiftScreen(),
+        '/profile': (context) => const ProfileScreen(),
       },
     );
   }
