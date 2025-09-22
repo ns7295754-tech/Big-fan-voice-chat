@@ -1,10 +1,4 @@
 import 'package:flutter/material.dart';
-import 'auth_screen.dart';
-import 'inbox_screen.dart';
-import 'voice_chat_screen.dart';
-import 'wallet_screen.dart';
-import 'gift_screen.dart';
-import 'profile_screen.dart';
 
 void main() {
   runApp(const BigFunApp());
@@ -16,21 +10,57 @@ class BigFunApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'BigFun',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      // The first screen that will be shown when the app starts
-      home: const AuthScreen(),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(primarySwatch: Colors.blue),
+      initialRoute: '/',
       routes: {
-        '/auth': (context) => const AuthScreen(),
-        '/inbox': (context) => const InboxScreen(),
-        '/voice': (context) => const VoiceChatScreen(),
-        '/wallet': (context) => const WalletScreen(),
-        '/gift': (context) => const GiftScreen(),
-        '/profile': (context) => const ProfileScreen(),
+        '/': (context) => const HomeScreen(),
+        '/auth': (context) => const PlaceholderScreen('Auth'),
+        '/inbox': (context) => const PlaceholderScreen('Inbox'),
+        '/profile': (context) => const PlaceholderScreen('Profile'),
+        '/voice': (context) => const PlaceholderScreen('Voice'),
+        '/wallet': (context) => const PlaceholderScreen('Wallet'),
       },
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('BigFun Home')),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.account_circle, size: 120),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/auth'),
+              child: const Text('Go to Auth'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class PlaceholderScreen extends StatelessWidget {
+  final String name;
+  const PlaceholderScreen(this.name, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(name)),
+      body: Center(
+        child: Text('$name screen (placeholder)'),
+      ),
     );
   }
 }
