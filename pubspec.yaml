@@ -9,16 +9,23 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
   cupertino_icons: ^1.0.8
-  firebase_core: ^3.4.0
-  firebase_auth: ^5.3.0
-  cloud_firestore: ^5.4.4
+
+  # 🔥 Firebase (latest stable, Flutter 3.24 compatible)
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.8.0
+  cloud_firestore: ^5.8.0
+
+  # 📱 Permissions
   permission_handler: ^11.3.1
+
+  # 🎤 Voice/Agora
   agora_rtc_engine: ^6.5.0
+
+  # 🎨 Fonts & UI helpers
   google_fonts: ^6.2.1
   provider: ^6.1.2
-  shared_preferences: ^2.2.3
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:
