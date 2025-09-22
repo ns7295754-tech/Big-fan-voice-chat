@@ -1,38 +1,38 @@
 name: bigfun_voice
-description: BigFun full project (voice + auth + wallet placeholders)
-publish_to: 'none'
+description: A new Flutter project for BigFun Voice Chat
+publish_to: 'none' 
+
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: ">=3.3.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.8
 
-  # 🔥 Firebase (latest stable, Flutter 3.24 compatible)
-  firebase_core: ^3.8.0
-  firebase_auth: ^5.8.0
-  cloud_firestore: ^5.8.0
+  # Firebase core (required for Firestore)
+  firebase_core: ^3.6.0
 
-  # 📱 Permissions
-  permission_handler: ^11.3.1
+  # Firestore (compatible with Flutter 3.24.3)
+  cloud_firestore: ^5.4.4
 
-  # 🎤 Voice/Agora
-  agora_rtc_engine: ^6.5.0
+  # Firebase Authentication (for phone OTP login if needed)
+  firebase_auth: ^5.3.3
 
-  # 🎨 Fonts & UI helpers
-  google_fonts: ^6.2.1
+  # Voice chat SDK (example: Agora – replace if using another one)
+  agora_rtc_engine: ^6.4.2
+
+  # State management
   provider: ^6.1.2
-  shared_preferences: ^2.3.2
+
+  # Default Flutter icons
+  cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/avatar_real.png
