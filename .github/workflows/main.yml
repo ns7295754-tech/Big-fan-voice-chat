@@ -40,7 +40,7 @@ jobs:
           echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
           echo "App name: $APP_NAME"
 
-      # Create new Flutter project structure
+      # Create new Flutter project structure with proper SDK versions
       - name: Create new Flutter project structure
         run: |
           echo "Creating new Flutter project..."
@@ -52,12 +52,18 @@ jobs:
           cp pubspec.yaml temp_project/pubspec.yaml
           cp -r test/ temp_project/test/ || echo "No test directory found"
           
+          # Fix SDK versions in Android configuration
+          echo "Fixing Android SDK versions..."
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' temp_project/android/app/build.gradle
+          sed -i 's/compileSdk flutter.compileSdkVersion/compileSdk 34/g' temp_project/android/app/build.gradle
+          sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 34/g' temp_project/android/app/build.gradle
+          
           echo "Replacing old project structure..."
           rm -rf android/ ios/ web/ linux/ macos/ windows/ || echo "Some platforms not found"
           cp -r temp_project/* .
           rm -rf temp_project/
           
-          echo "Project migration completed!"
+          echo "Project migration completed with fixed SDK versions!"
 
       # Install dependencies
       - name: Install dependencies
