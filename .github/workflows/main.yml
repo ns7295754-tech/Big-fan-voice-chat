@@ -1,26 +1,34 @@
-name: Flutter CI - Build APK
+name: Build APK
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.3' # upgraded Flutter (Dart 3.5.4 inside)
+          flutter-version: '3.24.3' # Dart 3.5.4 included
 
-      - name: Get dependencies
+      - name: Install dependencies
         run: flutter pub get
 
-      - name: Build APK
-        run: flutter build apk --release --target=lib/main.dart
+      - name: Build APK (split per ABI for smaller size)
+        run: flutter build apk --release --target=lib/main.dart --split-per-abi
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/*.apk
