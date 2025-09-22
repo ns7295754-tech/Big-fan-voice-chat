@@ -1,53 +1,74 @@
-name: build
+import 'package:flutter/material.dart';
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+void main() {
+  runApp(const BigFunApp());
+}
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+class BigFunApp extends StatelessWidget {
+  const BigFunApp({super.key});
 
-    steps:
-    - name: Checkout source code
-      uses: actions/checkout@v4
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'BigFun',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(primarySwatch: Colors.blue),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const HomeScreen(),
+        '/auth': (context) => const PlaceholderScreen('Auth'),
+        '/inbox': (context) => const PlaceholderScreen('Inbox'),
+        '/profile': (context) => const PlaceholderScreen('Profile'),
+        '/voice': (context) => const PlaceholderScreen('Voice'),
+        '/wallet': (context) => const PlaceholderScreen('Wallet'),
+      },
+    );
+  }
+}
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        distribution: temurin
-        java-version: 17
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
 
-    - name: Install Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.22.2'   # ✅ Updated Flutter (Dart 3.5.x inside)
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('BigFun Home')),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Make sure this file exists in pubspec.yaml under flutter: assets:
+            Image.asset(
+              'assets/avatar_real.png',
+              width: 120,
+              height: 120,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.account_circle, size: 120);
+              },
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/auth'),
+              child: const Text('Go to Auth'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-    - name: Get dependencies
-      run: flutter pub get
+class PlaceholderScreen extends StatelessWidget {
+  final String name;
+  const PlaceholderScreen(this.name, {super.key});
 
-    - name: Decode keystore
-      run: echo "$KEYSTORE_BASE64" | base64 -d > android/app/my-release-key.jks
-      env:
-        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-
-    - name: Create key.properties
-      run: |
-        echo "storeFile=my-release-key.jks" > android/key.properties
-        echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
-        echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
-        echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
-
-    - name: Add google-services.json
-      run: echo "${{ secrets.FIREBASE_CONFIG }}" | base64 -d > android/app/google-services.json
-
-    - name: Build APK
-      run: flutter build apk --release
-
-    - name: Upload Release APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-apk
-        path: build/app/outputs/flutter-apk/app-release.apk
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(name)),
+      body: Center(
+        child: Text('$name screen (placeholder)'),
+      ),
+    );
+  }
+}
