@@ -1,5 +1,5 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
-import 'config/agora_config.dart';
 
 void main() {
   runApp(const BigFunApp());
@@ -29,7 +29,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("BigFun Voice Home"),
+        title: const Text('BigFun Voice Home'),
       ),
       body: Center(
         child: Column(
@@ -38,15 +38,13 @@ class HomePage extends StatelessWidget {
           children: [
             const Icon(Icons.account_circle, size: 120),
             const SizedBox(height: 12),
-            const Text("👋 Welcome to BigFun Voice Chat"),
-            const SizedBox(height: 20),
-            Text("Agora App ID: ${AgoraConfig.appId}"),
+            const Text('Welcome to BigFun Voice Chat'),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 // TODO: Navigate to voice chat screen
               },
-              child: const Text("Join Voice Room"),
+              child: const Text('Join Voice Room'),
             ),
           ],
         ),
