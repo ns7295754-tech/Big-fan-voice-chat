@@ -40,7 +40,7 @@ jobs:
           echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
           echo "App name: $APP_NAME"
 
-      # Create new Flutter project structure with proper SDK versions
+      # Create new Flutter project and fix all configurations
       - name: Create new Flutter project structure
         run: |
           echo "Creating new Flutter project..."
@@ -52,18 +52,58 @@ jobs:
           cp pubspec.yaml temp_project/pubspec.yaml
           cp -r test/ temp_project/test/ || echo "No test directory found"
           
-          # Fix SDK versions in Android configuration
-          echo "Fixing Android SDK versions..."
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' temp_project/android/app/build.gradle
-          sed -i 's/compileSdk flutter.compileSdkVersion/compileSdk 34/g' temp_project/android/app/build.gradle
-          sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 34/g' temp_project/android/app/build.gradle
+          # Update Android Gradle Plugin and SDK versions
+          echo "Updating Android configurations..."
+          
+          # Update build.gradle (project level)
+          cat > temp_project/android/build.gradle << 'EOF'
+          buildscript {
+              ext.kotlin_version = '1.7.10'
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:8.1.0'
+                  classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+              }
+          }
+          
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          
+          rootProject.buildDir = '../build'
+          subprojects {
+              project.buildDir = "${rootProject.buildDir}/${project.name}"
+          }
+          subprojects {
+              project.evaluationDependsOn(':app')
+          }
+          
+          tasks.register("clean", Delete) {
+              delete rootProject.buildDir
+          }
+          EOF
+          
+          # Update app/build.gradle with proper SDK versions
+          sed -i 's/android {/android {\n    namespace "com.example.'${{ steps.get_app_name.outputs.app_name }}'"/' temp_project/android/app/build.gradle
+          sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdk 34/' temp_project/android/app/build.gradle
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/' temp_project/android/app/build.gradle
+          sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 34/' temp_project/android/app/build.gradle
+          
+          # Update gradle wrapper
+          echo "distributionUrl=https\\://services.gradle.org/distributions/gradle-8.1-all.zip" > temp_project/android/gradle/wrapper/gradle-wrapper.properties
           
           echo "Replacing old project structure..."
           rm -rf android/ ios/ web/ linux/ macos/ windows/ || echo "Some platforms not found"
           cp -r temp_project/* .
           rm -rf temp_project/
           
-          echo "Project migration completed with fixed SDK versions!"
+          echo "Project migration completed with modern configurations!"
 
       # Install dependencies
       - name: Install dependencies
