@@ -28,10 +28,10 @@ jobs:
           flutter-version: '3.24.4'
           channel: stable
 
-      - name: Ensure gradle wrapper exists
+      - name: Ensure Gradle wrapper
         run: |
           if [ ! -f android/gradlew ]; then
-            echo "⚠️ Gradle wrapper missing. Regenerating via flutter create..."
+            echo "Restoring Gradle wrapper..."
             flutter create -t app temp_restore_dir
             cp -r temp_restore_dir/android/gradle android/gradle
             cp -r temp_restore_dir/android/gradlew android/gradlew
@@ -42,13 +42,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo "📦 Installing Flutter dependencies..."
+          echo "Installing dependencies..."
           flutter pub get
 
-      - name: Decode keystore (if provided)
+      - name: Setup keystore (if provided)
         if: ${{ secrets.ANDROID_KEYSTORE != '' }}
         run: |
-          echo "🔑 Setting up release keystore..."
+          echo "Configuring keystore..."
           mkdir -p android/app
           echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 --decode > android/app/release-keystore.jks
           echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
@@ -58,17 +58,17 @@ jobs:
 
       - name: Build Debug APK
         run: |
-          echo "🚧 Building debug APK..."
+          echo "Building debug APK..."
           flutter build apk --debug --no-shrink --verbose
 
       - name: Build Release APK
         run: |
-          echo "🚀 Building release APK..."
-          flutter build apk --release --no-shrink --verbose || (echo "❌ Release build failed" && exit 1)
+          echo "Building release APK..."
+          flutter build apk --release --no-shrink --verbose || (echo "Release build failed" && exit 1)
 
       - name: List APKs
         run: |
-          echo "📂 Generated APK files:"
+          echo "APK files generated:"
           find build -type f -name "*.apk" -exec ls -lh {} \; || true
 
       - name: Upload artifacts
