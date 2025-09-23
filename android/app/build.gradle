@@ -1,0 +1,31 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services"
+}
+
+android {
+    namespace "com.bigfun.voicechat"   // ✅ তোমার প্যাকেজ নাম
+    compileSdkVersion 34
+
+    defaultConfig {
+        applicationId "com.bigfun.voicechat"  // ✅ তোমার app id
+        minSdkVersion 23
+        targetSdkVersion 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
+        }
+    }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.10"
+}
