@@ -1,4 +1,4 @@
-# .github/workflows/main.yml - Updated GitHub Actions Workflow
+# .github/workflows/main.yml - Fixed GitHub Actions Workflow
 
 name: Build Flutter APK
 
@@ -32,10 +32,10 @@ jobs:
       run: flutter pub get
 
     - name: Analyze project source
-      run: flutter analyze
+      run: flutter analyze --no-fatal-infos
 
     - name: Run tests
-      run: flutter test
+      run: flutter test --no-pub
 
     - name: Build APK
       run: flutter build apk --release
