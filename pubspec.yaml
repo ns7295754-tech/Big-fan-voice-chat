@@ -1,51 +1,48 @@
 name: bigfun_voice
-description: A new Flutter project for BigFun Voice Chat
-publish_to: 'none' 
+description: BigFun Voice Chat with Firebase, Agora, Wallet and Gift features
+publish_to: 'none'
 
 version: 1.0.0+1
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
-  # Firebase core (required for Firestore)
+  # Firebase
   firebase_core: ^3.6.0
-
-  # Firestore (for wallet, gifts, profiles, etc.)
-  cloud_firestore: ^5.4.4
-
-  # Firebase Authentication (for phone OTP login)
   firebase_auth: ^5.3.3
+  cloud_firestore: ^5.4.4
+  firebase_storage: ^11.0.0
 
-  # Voice chat SDK (Agora – for voice rooms)
+  # Voice Chat SDK
   agora_rtc_engine: ^6.4.2
 
-  # State management
+  # Utils
   provider: ^6.1.2
+  shared_preferences: ^2.2.15
+  http: ^1.1.0
+  uuid: ^4.1.0
+  permission_handler: ^10.4.0
 
-  # Default Flutter icons
+  # Icons
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app_icon.png"
 
 flutter:
   uses-material-design: true
-
   assets:
-    - assets/images/background.png
-    - assets/images/banner.png
-    - assets/images/crown.png
-    - assets/images/gift.png
-    - assets/images/home.png
-    - assets/images/mic.png
-    - assets/images/profile.png
-    - assets/images/rocket.png
-    - assets/images/star.png
-    - assets/images/wallet.png
-    - assets/images/app_icon.png
+    - assets/images/
