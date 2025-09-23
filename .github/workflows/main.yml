@@ -1,42 +1,53 @@
 name: Build Flutter APK
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+push:
+branches: [ main, master ]
+pull_request:
+branches: [ main, master ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+build:
+runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+steps:
 
-      - name: Set up Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: '17'   # ✅ Required for Gradle
+name: Checkout code
+uses: actions/checkout@v4
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.4'   # ✅ Dart 3.4.4 included
-          channel: 'stable'
+name: Set up Java
+uses: actions/setup-java@v3
+with:
+distribution: 'zulu'
+java-version: '11'
 
-      - name: Install dependencies
-        run: |
-          flutter clean
-          flutter pub get
+name: Set up Flutter
+uses: subosito/flutter-action@v2
+with:
+flutter-version: '3.19.0'
+channel: 'stable'
 
-      - name: Build APK (Debug)
-        run: flutter build apk --debug --verbose
+name: Cache Gradle files
+uses: actions/cache@v3
+with:
+path: |
+~/.gradle/caches
+~/.gradle/wrapper
+key: ${{ runner.os }}-gradle-${{ hashFiles('/.gradle', '/gradle-wrapper.properties') }}
+restore-keys: |
+${{ runner.os }}-gradle-
 
-      - name: Upload APK
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: flutter-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk   # ✅ New path
+name: Clean and get packages
+run: |
+flutter clean
+flutter pub get
+
+name: Build APK (Debug)
+run: flutter build apk --debug
+
+name: Upload APK
+uses: actions/upload-artifact@v4
+with:
+name: flutter-debug-apk
+path: build/app/outputs/apk/debug/app-debug.apk
+if-no-files-found: error
