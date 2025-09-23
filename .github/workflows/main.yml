@@ -1,52 +1,31 @@
-name: Build BigFun Voice Chat APK
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+buildscript {
+    ext.kotlin_version = '1.9.10'
+    repositories {
+        google()
+        mavenCentral()
+    }
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.google.gms:google-services:4.4.0'
+    }
+}
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
 
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+    project.evaluationDependsOn(':app')
+}
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.19.0'
-          channel: 'stable'
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Create google-services.json
-        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
-
-      - name: Create release keystore
-        run: echo '${{ secrets.KEYSTORE_BASE64 }}' | base64 -d > android/app/my-release-key.jks
-
-      - name: Build Debug APK
-        run: flutter build apk --debug
-
-      - name: Build Release APK
-        run: flutter build apk --release --split-per-abi
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-
-      - name: Upload APK artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: bigfun-apk
-          path: build/app/outputs/flutter-apk/*.apk
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
