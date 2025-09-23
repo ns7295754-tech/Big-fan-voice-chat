@@ -1,92 +1,56 @@
-name: Build & Upload Android Release APK
+name: Build Flutter APK
 
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch:
+    branches:
+      - main
+  pull_request:
 
 jobs:
-  build_release_apk:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
 
     steps:
-      - name: Checkout repository
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Set up Java 17
-        uses: actions/setup-java@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: '17'
+          distribution: temurin
+          java-version: "17"
 
-      - name: Set up Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.4'
-          channel: 'stable'
+          flutter-version: "3.24.3"
 
-      - name: Verify Flutter
+      - name: Install dependencies
         run: |
-          flutter --version
-          flutter doctor -v
-
-      - name: Decode Android keystore (from secret)
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
-        run: |
-          mkdir -p android/app
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/release-keystore.jks
-        # set secret ANDROID_KEYSTORE_BASE64 = base64 of your .jks file
-
-      - name: Create android/key.properties
-        run: |
-          cat > android/key.properties <<EOF
-storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
-keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-storeFile=release-keystore.jks
-EOF
-        # set secrets: ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_PASSWORD, ANDROID_KEY_ALIAS
-
-      - name: Create android/local.properties (point to Flutter SDK & Android SDK)
-        run: |
-          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-          echo "sdk.dir=$ANDROID_HOME" >> android/local.properties
-
-      - name: Ensure gradle wrapper executable (safe)
-        run: |
-          if [ -f android/gradlew ]; then chmod +x android/gradlew; fi
-
-      - name: Clean & get packages
-        run: |
-          flutter clean
+          echo "📦 Installing dependencies..."
           flutter pub get
 
-      - name: (Optional) Fix/minSdk if plugin needs higher API
+      - name: Decode keystore
         run: |
-          # If you need to force minSdkVersion to 21, uncomment the sed below.
-          # sed -i -e "s/minSdkVersion [0-9]\+/minSdkVersion 21/" android/app/build.gradle || true
-          echo "skip"
+          echo "🔑 Decoding keystore..."
+          echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 --decode > android/app/release.keystore
 
-      - name: Build Release APK (signed)
-        env:
-          JAVA_HOME: /usr/lib/jvm/zulu-17
+      - name: Create key.properties
         run: |
-          set -e
-          echo "Building release APK..."
-          flutter build apk --release --no-tree-shake-icons
+          echo "📝 Creating key.properties..."
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=release.keystore" >> android/key.properties
 
-      - name: Find generated APKs (debug info)
+      - name: Build release APK
         run: |
-          echo "Looking for APK files..."
-          find . -type f -name "*.apk" -maxdepth 6 -exec ls -lh {} \; || true
+          echo "🚀 Starting build..."
+          flutter build apk --release
+          echo "✅ Build finished successfully!"
 
-      - name: Upload Release APK artifact
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: flutter-release-apk
-          path: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/apk/release/app-release.apk
-            build/**/*.apk
-          if-no-files-found: error
+          name: app-release
+          path: build/app/outputs/flutter-apk/app-release.apk
