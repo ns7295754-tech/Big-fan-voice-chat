@@ -1,6 +1,8 @@
-name: bigfun_voice
-description: BigFun Voice Chat with all features working
-publish_to: 'none'
+name: bigfun_voice_chat
+description: A new Flutter project.
+
+publish_to: "none" # Remove this line if you plan to publish on pub.dev
+
 version: 1.0.0+1
 
 environment:
@@ -11,40 +13,26 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Firebase (for OTP login, Firestore, Storage)
-  firebase_core: ^2.24.0
-  firebase_auth: ^4.15.0
-  cloud_firestore: ^4.13.0
-  firebase_storage: ^11.5.0
-
-  # Agora Voice Chat
+  cupertino_icons: ^1.0.8
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  provider: ^6.1.2
+  shared_preferences: ^2.2.3
+  intl: ^0.19.0
+  http: ^1.2.2
+  # যদি voice chat এ কাজ করো
   agora_rtc_engine: ^6.3.2
-  permission_handler: ^11.0.1
-
-  # State Management & Utils
-  provider: ^6.1.1
-  http: ^1.1.0
-  shared_preferences: ^2.2.2
-  uuid: ^4.1.0
-  intl: ^0.18.1
-
-  # UI
-  flutter_svg: ^2.0.9
-  cupertino_icons: ^1.0.6
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
-  flutter_launcher_icons: ^0.13.1
-
-flutter_icons:
-  android: true
-  ios: true
-  image_path: "assets/images/app_icon.png"
 
 flutter:
   uses-material-design: true
+
   assets:
     - assets/images/
     - assets/audio/
