@@ -11,34 +11,34 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Firebase - Updated versions for compatibility  
-  firebase_core: ^3.6.0
-  firebase_auth: ^5.3.3
-  cloud_firestore: ^5.4.4
-  firebase_storage: ^12.3.2
+  # Firebase - Compatible versions for Flutter 3.19.0
+  firebase_core: ^2.24.0
+  firebase_auth: ^4.15.0
+  cloud_firestore: ^4.13.0
+  firebase_storage: ^11.5.0
 
   # Voice Chat - Agora
-  agora_rtc_engine: ^6.4.2
-  permission_handler: ^11.3.1
+  agora_rtc_engine: ^6.3.2
+  permission_handler: ^11.0.1
 
-  # State Management & Core
-  provider: ^6.1.2
-  http: ^1.2.2
-  shared_preferences: ^2.3.2
+  # State Management & Core - Compatible versions
+  provider: ^6.1.1
+  http: ^1.1.0
+  shared_preferences: ^2.2.2
 
-  # UI Components
-  flutter_svg: ^2.0.10+1
-  cupertino_icons: ^1.0.8
+  # UI Components - Compatible versions
+  flutter_svg: ^2.0.9
+  cupertino_icons: ^1.0.6
 
-  # Additional utilities for your features
-  uuid: ^4.5.1
-  intl: ^0.19.0
+  # Additional utilities - Compatible versions
+  uuid: ^4.1.0
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
-  flutter_launcher_icons: ^0.14.1
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter_icons:
   android: true
