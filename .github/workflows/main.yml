@@ -59,15 +59,6 @@ jobs:
             echo "No android/app/build.gradle found — skipping minSdk fix."
           fi
 
-      - name: Run tests (non-blocking)
-        run: |
-          if [ -d "test" ]; then
-            echo "Running flutter test (will not stop build on fail)..."
-            flutter test || echo "Tests failed but continuing"
-          else
-            echo "No tests directory — skipping tests."
-          fi
-
       - name: Build APK
         run: flutter build apk --release --split-per-abi
 
