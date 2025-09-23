@@ -1,131 +1,4 @@
-# ১. pubspec.yaml ফাইল (সম্পূর্ণ কোড)
-name: big_fan_voice_chat
-description: A new Flutter project.
-publish_to: 'none'
-
-version: 1.0.0+1
-
-environment:
-  sdk: ">=3.4.0 <4.0.0"
-  flutter: ">=3.0.0"
-
-dependencies:
-  flutter:
-    sdk: flutter
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.15.3
-  cloud_firestore: ^4.13.6
-  provider: ^6.1.1
-  shared_preferences: ^2.2.2
-  intl: ^0.19.0
-  http: ^1.1.2
-  agora_rtc_engine: ^6.3.2
-  permission_handler: ^11.1.0
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^3.0.0
-
-flutter:
-  uses-material-design: true
-
----
-
-# ২. android/app/build.gradle ফাইল (সম্পূর্ণ কোড)
-def localProperties = new Properties()
-def localPropertiesFile = rootProject.file('local.properties')
-if (localPropertiesFile.exists()) {
-    localPropertiesFile.withReader('UTF-8') { reader ->
-        localProperties.load(reader)
-    }
-}
-
-def flutterRoot = localProperties.getProperty('flutter.sdk')
-if (flutterRoot == null) {
-    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
-}
-
-def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
-if (flutterVersionCode == null) {
-    flutterVersionCode = '1'
-}
-
-def flutterVersionName = localProperties.getProperty('flutter.versionName')
-if (flutterVersionName == null) {
-    flutterVersionName = '1.0'
-}
-
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
-
-def keystoreProperties = new Properties()
-def keystorePropertiesFile = rootProject.file('key.properties')
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
-
-android {
-    compileSdkVersion 34
-    ndkVersion flutter.ndkVersion
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = '17'
-    }
-
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-    }
-
-    defaultConfig {
-        applicationId "com.example.big_fan_voice_chat"
-        minSdkVersion 21
-        targetSdkVersion 34
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
-        multiDexEnabled true
-    }
-
-    signingConfigs {
-        release {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-            storePassword keystoreProperties['storePassword']
-        }
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-            minifyEnabled true
-            shrinkResources true
-        }
-        debug {
-            signingConfig signingConfigs.debug
-        }
-    }
-}
-
-flutter {
-    source '../..'
-}
-
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    implementation 'androidx.multidex:multidex:2.0.1'
-}
-
----
-
-# ৩. .github/workflows/main.yml ফাইল (সম্পূর্ণ কোড)
-name: Flutter Build and Release
+name: Build Flutter APK
 
 on:
   push:
@@ -138,107 +11,111 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      # 🔹 Step 1: Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Java 17
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'zulu'
-        java-version: '17'
+      # 🔹 Step 2: Setup Java (Java 17 required for Gradle/Flutter)
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
 
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.19.0'
-        channel: 'stable'
+      # 🔹 Step 3: Setup Flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.4'
+          channel: 'stable'
 
-    - name: Get dependencies
-      run: flutter pub get
+      # 🔹 Step 4: Flutter Doctor Check
+      - name: Flutter Doctor
+        run: flutter doctor -v
 
-    - name: Analyze project
-      run: flutter analyze
+      # 🔹 Step 5: Clean and get dependencies
+      - name: Clean and Get Dependencies
+        run: |
+          flutter clean
+          flutter pub get
+          flutter pub deps
 
-    - name: Run tests
-      run: flutter test
+      # 🔹 Step 6: Ensure Android wrapper exists and permissions
+      - name: Setup Android Gradlew
+        run: |
+          if [ ! -f android/gradlew ]; then
+            echo "⚠️ gradlew missing, creating android project..."
+            flutter create . --platforms=android
+          fi
+          chmod +x android/gradlew
+          ls -la android/
 
-    - name: Create keystore file
-      run: |
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
-      if: github.event_name == 'push'
+      # 🔹 Step 7: Verify project structure
+      - name: Verify Project Structure
+        run: |
+          echo "📁 Project structure:"
+          find . -name "*.gradle" -type f | head -10
+          echo "📱 Android folder contents:"
+          ls -la android/app/
 
-    - name: Create key.properties
-      run: |
-        echo "storePassword=${{ secrets.STORE_PASSWORD }}" > android/key.properties
-        echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
-        echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
-        echo "storeFile=upload-keystore.jks" >> android/key.properties
-      if: github.event_name == 'push'
+      # 🔹 Step 8: Build Debug APK (safer first)
+      - name: Build APK (Debug)
+        run: |
+          echo "🔨 Building Debug APK..."
+          flutter build apk --debug --verbose --no-tree-shake-icons
+        continue-on-error: false
 
-    - name: Build APK
-      run: flutter build apk --release
+      # 🔹 Step 9: Check if debug APK was created
+      - name: Verify Debug APK Creation
+        run: |
+          if [ -f build/app/outputs/flutter-apk/app-debug.apk ]; then
+            echo "✅ Debug APK created successfully"
+            ls -la build/app/outputs/flutter-apk/
+          else
+            echo "❌ Debug APK not found"
+            find build -name "*.apk" -type f || echo "No APK files found"
+            exit 1
+          fi
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v3
-      with:
-        name: release-apk
-        path: build/app/outputs/flutter-apk/app-release.apk
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
 
----
+      # 🔹 Step 10: Build Release APK (only if debug succeeds)
+      - name: Build APK (Release)
+        run: |
+          echo "🚀 Building Release APK..."
+          flutter build apk --release --verbose --no-tree-shake-icons
+        continue-on-error: true
 
-# ৪. android/build.gradle (project level) - শুধু version check করুন
-buildscript {
-    ext.kotlin_version = '1.9.10'
-    repositories {
-        google()
-        mavenCentral()
-    }
+      # 🔹 Step 11: Check if release APK was created
+      - name: Verify Release APK Creation
+        run: |
+          if [ -f build/app/outputs/flutter-apk/app-release.apk ]; then
+            echo "✅ Release APK created successfully"
+            ls -la build/app/outputs/flutter-apk/
+          else
+            echo "⚠️ Release APK not found, checking for any APK files..."
+            find build -name "*.apk" -type f || echo "No release APK files found"
+          fi
 
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: warn
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-rootProject.buildDir = '../build'
-subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
-    project.evaluationDependsOn(':app')
-}
-
-tasks.register("clean", Delete) {
-    delete rootProject.buildDir
-}
-
----
-
-# ৫. android/gradle/wrapper/gradle-wrapper.properties
-distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists
-distributionUrl=https\://services.gradle.org/distributions/gradle-8.3-all.zip
-
----
-
-# ৬. key.properties ফাইল তৈরি করুন (android folder এ)
-storePassword=yourStorePassword
-keyPassword=yourKeyPassword
-keyAlias=upload
-storeFile=upload-keystore.jks
-
----
-
-# ৭. Commands to run:
-# flutter clean
-# flutter pub get
-# flutter pub deps
-# flutter build apk --release
+      # 🔹 Step 12: Build info summary
+      - name: Build Summary
+        run: |
+          echo "📊 Build Summary:"
+          echo "Flutter Version: $(flutter --version | head -1)"
+          echo "Java Version: $(java -version 2>&1 | head -1)"
+          echo "Gradle Version: $(cd android && ./gradlew --version | grep Gradle | head -1)"
+          echo "📦 APK Files:"
+          find build -name "*.apk" -type f -exec ls -la {} \; || echo "No APK files found"
+        if: always()
