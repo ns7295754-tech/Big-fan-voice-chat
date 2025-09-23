@@ -1,90 +1,90 @@
 name: Build Flutter APK
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+push:
+branches: [ main, master ]
+pull_request:
+branches: [ main, master ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+build:
+runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+steps:  
+- name: Checkout code  
+  uses: actions/checkout@v4  
 
-    - name: Set up Java
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'zulu'
-        java-version: '11'
+- name: Set up Java  
+  uses: actions/setup-java@v3  
+  with:  
+    distribution: 'zulu'  
+    java-version: '11'  
 
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.19.0'
-        channel: 'stable'
+- name: Set up Flutter  
+  uses: subosito/flutter-action@v2  
+  with:  
+    flutter-version: '3.19.0'  
+    channel: 'stable'  
 
-    # ✅ Gradle Cache Added
-    - name: Cache Gradle files
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
+# ✅ Gradle Cache যোগ করা হলো  
+- name: Cache Gradle files  
+  uses: actions/cache@v3  
+  with:  
+    path: |  
+      ~/.gradle/caches  
+      ~/.gradle/wrapper  
+    key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}  
+    restore-keys: |  
+      ${{ runner.os }}-gradle-  
 
-    - name: Diagnose and fix project structure
-      run: |
-        echo "=== DIAGNOSING PROJECT STRUCTURE ==="
-        echo "Current directory: $(pwd)"
-        ls -la
-        if [ ! -f "pubspec.yaml" ]; then
-          FLUTTER_DIR=$(find . -name "pubspec.yaml" -type f | head -1 | xargs dirname)
-          if [ -n "$FLUTTER_DIR" ]; then
-            cd "$FLUTTER_DIR"
-          else
-            echo "ERROR: No Flutter project found!"
-            exit 1
-          fi
-        fi
+- name: Diagnose and fix project structure  
+  run: |  
+    echo "=== DIAGNOSING PROJECT STRUCTURE ==="  
+    echo "Current directory: $(pwd)"  
+    ls -la  
+    if [ ! -f "pubspec.yaml" ]; then  
+      FLUTTER_DIR=$(find . -name "pubspec.yaml" -type f | head -1 | xargs dirname)  
+      if [ -n "$FLUTTER_DIR" ]; then  
+        cd "$FLUTTER_DIR"  
+      else  
+        echo "ERROR: No Flutter project found!"  
+        exit 1  
+      fi  
+    fi  
 
-    - name: Complete project regeneration
-      run: |
-        echo "=== REGENERATING PROJECT STRUCTURE ==="
-        cp pubspec.yaml pubspec.yaml.backup
-        cp -r lib lib_backup 2>/dev/null || true
-        cp -r assets assets_backup 2>/dev/null || true
-        rm -rf android ios build .dart_tool
-        flutter create --org com.example --project-name big_fan_voice_chat .
-        cp pubspec.yaml.backup pubspec.yaml
-        rm -rf lib && cp -r lib_backup lib 2>/dev/null || true
-        rm -rf assets && cp -r assets_backup assets 2>/dev/null || mkdir -p assets
-        mkdir -p assets/images assets/audio test
-        touch assets/audio/.gitkeep
+- name: Complete project regeneration  
+  run: |  
+    echo "=== REGENERATING PROJECT STRUCTURE ==="  
+    cp pubspec.yaml pubspec.yaml.backup  
+    cp -r lib lib_backup 2>/dev/null || true  
+    cp -r assets assets_backup 2>/dev/null || true  
+    rm -rf android ios build .dart_tool  
+    flutter create --org com.example --project-name big_fan_voice_chat .  
+    cp pubspec.yaml.backup pubspec.yaml  
+    rm -rf lib && cp -r lib_backup lib 2>/dev/null || true  
+    rm -rf assets && cp -r assets_backup assets 2>/dev/null || mkdir -p assets  
+    mkdir -p assets/images assets/audio test  
+    touch assets/audio/.gitkeep  
 
-    - name: Setup Android configuration
-      run: |
-        echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-        echo "sdk.dir=$ANDROID_HOME" >> android/local.properties
-        chmod +x android/gradlew
+- name: Setup Android configuration  
+  run: |  
+    echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties  
+    echo "sdk.dir=$ANDROID_HOME" >> android/local.properties  
+    chmod +x android/gradlew  
 
-    - name: Clean and prepare Flutter
-      run: |
-        flutter clean
-        flutter pub get
+- name: Clean and prepare Flutter  
+  run: |  
+    flutter clean  
+    flutter pub get  
 
-    - name: Build APK with multiple attempts
-      run: |
-        echo "=== BUILDING APK ==="
-        flutter build apk --debug || (flutter clean && flutter pub get && flutter build apk --debug)
+- name: Build APK with multiple attempts  
+  run: |  
+    echo "=== BUILDING APK ==="  
+    flutter build apk --debug || (flutter clean && flutter pub get && flutter build apk --debug)  
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: flutter-debug-apk
-        path: build/app/outputs/flutter-apk/app-debug.apk
-        if-no-files-found: warn
+- name: Upload APK  
+  uses: actions/upload-artifact@v4  
+  with:  
+    name: flutter-debug-apk  
+    path: build/app/outputs/flutter-apk/app-debug.apk  
+    if-no-files-found: warn
