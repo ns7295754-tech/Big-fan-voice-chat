@@ -1,37 +1,40 @@
-android {
-    namespace 'com.example.bigfun_voice'
-    compileSdk 34
-    ndkVersion flutter.ndkVersion
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services"
+}
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
+android {
+    namespace "com.example.bigfun"
+    compileSdkVersion 34
 
     defaultConfig {
-        applicationId "com.example.bigfun_voice"
-        minSdkVersion 23 // Firebase & Agora এর জন্য 23 দরকার
+        applicationId "com.example.bigfun"
+        minSdkVersion 23
         targetSdkVersion 34
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
-        multiDexEnabled true // ✅ Multidex enable
+        versionCode 1
+        versionName "1.0"
     }
 
     buildTypes {
         release {
             signingConfig signingConfigs.debug
-        }
-    }
-
-    // ✅ Conflict fix
-    configurations.all {
-        resolutionStrategy {
-            force 'com.google.firebase:firebase-auth:22.3.0'
-            force 'com.google.android.gms:play-services-auth:20.7.0'
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
 
+flutter {
+    source '../..'
+}
+
 dependencies {
-    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation platform('com.google.firebase:firebase-bom:33.2.0')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
+    implementation 'com.google.firebase:firebase-database'
 }
