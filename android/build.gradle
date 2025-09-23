@@ -1,31 +1,71 @@
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
+plugins {
+    id 'com.android.application'
+    id 'com.google.gms.google-services'
+    id 'kotlin-android'
+}
+
+android {
+    namespace "com.bigfun.voicechat"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.bigfun.voicechat"
+        minSdk 23
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
     }
-    dependencies {
-        // Android Gradle Plugin
-        classpath 'com.android.tools.build:gradle:8.3.2'
-        // Kotlin plugin
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.23"
-        // Google services (Firebase)
-        classpath 'com.google.gms:google-services:4.4.1'
+
+    signingConfigs {
+        release {
+            keyAlias 'bigfun'
+            keyPassword 'Bigfun@2580'
+            storeFile file('my-release-key.jks')
+            storePassword 'Bigfun@2580'
+        }
+        debug {
+            storeFile file('debug.keystore')
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            shrinkResources false
+        }
+        debug {
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    configurations.all {
+        resolutionStrategy {
+            force 'com.google.firebase:firebase-auth:23.2.1'
+            force 'com.google.android.gms:play-services-auth:20.7.0'
+            force 'com.google.firebase:firebase-core:21.1.1'
+        }
     }
 }
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-rootProject.buildDir = "../build"
-
-subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-
-tasks.register("clean", Delete) {
-    delete rootProject.buildDir
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.10"
+    implementation platform('com.google.firebase:firebase-bom:32.7.0')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
+    implementation 'com.google.firebase:firebase-storage'
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation "androidx.core:core-ktx:1.12.0"
+    implementation "androidx.appcompat:appcompat:1.6.1"
+    implementation "com.google.android.material:material:1.11.0"
 }
