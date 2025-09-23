@@ -1,2 +1,18 @@
-rootProject.name = 'big_fun_voice_chat'
+rootProject.name = "Big-fan-voice-chat"
 include ':app'
+
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
