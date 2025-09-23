@@ -1,40 +1,53 @@
 plugins {
-    id "com.android.application"
-    id "kotlin-android"
-    id "dev.flutter.flutter-gradle-plugin"
-    id "com.google.gms.google-services"
+    id 'com.android.application'
+    id 'com.google.gms.google-services'
+    id 'kotlin-android'
 }
 
 android {
-    namespace "com.example.bigfun"
-    compileSdkVersion 34
+    namespace "com.bigfun.voiceapp"
+    compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.bigfun"
-        minSdkVersion 23
-        targetSdkVersion 34
+        applicationId "com.bigfun.voiceapp"
+        minSdk 23          // ✅ Updated from 21 → 23 (fixes Firebase error)
+        targetSdk 34
         versionCode 1
         versionName "1.0"
     }
 
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled false
             shrinkResources false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        debug {
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
     }
 }
 
-flutter {
-    source '../..'
-}
-
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation platform('com.google.firebase:firebase-bom:33.2.0')
-    implementation 'com.google.firebase:firebase-auth'
-    implementation 'com.google.firebase:firebase-firestore'
-    implementation 'com.google.firebase:firebase-database'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.23"
+
+    // ✅ Firebase dependencies
+    implementation "com.google.firebase:firebase-auth:23.2.1"
+    implementation "com.google.firebase:firebase-database:20.3.0"
+    implementation "com.google.firebase:firebase-storage:20.3.0"
+    implementation platform("com.google.firebase:firebase-bom:33.2.0")
+
+    // ✅ AndroidX & Material
+    implementation "androidx.core:core-ktx:1.13.1"
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation "com.google.android.material:material:1.12.0"
 }
