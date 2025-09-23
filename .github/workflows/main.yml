@@ -9,135 +9,44 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Java 11
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '11'
+    - uses: actions/checkout@v3
 
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.19.6'
+        flutter-version: '3.13.9'
         channel: 'stable'
-        cache: true
 
-    - name: Flutter doctor
-      run: |
-        flutter --version
-        flutter doctor -v
+    - name: Install dependencies
+      run: flutter pub get
 
-    - name: Clean Flutter
-      run: |
-        flutter clean
-        flutter pub cache clean
-
-    - name: Fix pubspec.yaml SDK constraints
-      run: |
-        # Fix Dart SDK version constraint
-        sed -i 's/sdk: ">=3\.3\.0 <4\.0\.0"/sdk: ">=3.0.0 <4.0.0"/g' pubspec.yaml
-        sed -i 's/sdk: ">=3\.2\.0 <4\.0\.0"/sdk: ">=3.0.0 <4.0.0"/g' pubspec.yaml
-        sed -i 's/sdk: ">=3\.4\.0 <4\.0\.0"/sdk: ">=3.0.0 <4.0.0"/g' pubspec.yaml
-        echo "Updated pubspec.yaml:"
-        head -10 pubspec.yaml
-
-    - name: Create google-services.json
+    - name: Create dummy google-services.json
       run: |
         mkdir -p android/app
-        cat > android/app/google-services.json << 'EOF'
-        {
+        echo '{
           "project_info": {
             "project_number": "123456789",
-            "project_id": "dummy-project",
-            "storage_bucket": "dummy-project.appspot.com"
+            "project_id": "dummy-project"
           },
           "client": [
             {
               "client_info": {
-                "mobilesdk_app_id": "1:123456789:android:dummy123",
+                "mobilesdk_app_id": "1:123456789:android:dummy",
                 "android_client_info": {
-                  "package_name": "com.bigfun.voice.chat"
-                }
-              },
-              "oauth_client": [
-                {
-                  "client_id": "123456789-dummy.apps.googleusercontent.com",
-                  "client_type": 3
-                }
-              ],
-              "api_key": [
-                {
-                  "current_key": "AIzaSyDummy-API-Key-12345"
-                }
-              ],
-              "services": {
-                "appinvite_service": {
-                  "other_platform_oauth_client": [
-                    {
-                      "client_id": "123456789-dummy.apps.googleusercontent.com",
-                      "client_type": 3
-                    }
-                  ]
+                  "package_name": "com.example.app"
                 }
               }
             }
-          ],
-          "configuration_version": "1"
-        }
-        EOF
+          ]
+        }' > android/app/google-services.json
 
-    - name: Create debug keystore
-      run: |
-        mkdir -p android/app
-        keytool -genkeypair -v -keystore android/app/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-
-    - name: Create key.properties
-      run: |
-        cat > android/key.properties << 'EOF'
-        storePassword=android
-        keyPassword=android
-        keyAlias=androiddebugkey
-        storeFile=debug.keystore
-        EOF
-
-    - name: Get dependencies with retry
-      run: |
-        for i in {1..3}; do
-          echo "Attempt $i to get dependencies..."
-          if flutter pub get; then
-            echo "Dependencies resolved successfully!"
-            break
-          else
-            echo "Attempt $i failed, cleaning and retrying..."
-            flutter clean
-            flutter pub cache clean
-            sleep 5
-          fi
-          if [ $i -eq 3 ]; then
-            echo "All attempts failed. Checking pubspec.yaml..."
-            cat pubspec.yaml
-            exit 1
-          fi
-        done
-
-    - name: Build debug APK
-      run: |
-        flutter build apk --debug --verbose
+    - name: Build APK
+      run: flutter build apk --release
 
     - name: Upload APK
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
-        name: app-debug-apk
-        path: build/app/outputs/flutter-apk/app-debug.apk
-        retention-days: 7
-
-    - name: Build summary
-      run: |
-        echo "Build completed successfully!"
-        ls -la build/app/outputs/flutter-apk/
+        name: release-apk
+        path: build/app/outputs/flutter-apk/app-release.apk
