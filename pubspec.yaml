@@ -4,14 +4,14 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.3.0 <4.0.0'
-  flutter: '>=3.19.0'
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
-  # Firebase - Compatible versions for Flutter 3.19.0
+  # Firebase (compatible with Flutter 3.19.0)
   firebase_core: ^2.24.0
   firebase_auth: ^4.15.0
   cloud_firestore: ^4.13.0
@@ -21,16 +21,16 @@ dependencies:
   agora_rtc_engine: ^6.3.2
   permission_handler: ^11.0.1
 
-  # State Management & Core - Compatible versions
+  # State Management & Core
   provider: ^6.1.1
   http: ^1.1.0
   shared_preferences: ^2.2.2
 
-  # UI Components - Compatible versions
+  # UI
   flutter_svg: ^2.0.9
   cupertino_icons: ^1.0.6
 
-  # Additional utilities - Compatible versions
+  # Utilities
   uuid: ^4.1.0
   intl: ^0.18.1
 
