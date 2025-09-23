@@ -1,78 +1,31 @@
-plugins {
-    id 'com.android.application'
-    id 'com.google.gms.google-services'
-    id 'kotlin-android'
-}
-
-android {
-    namespace "com.bigfun.voicechat"
-    compileSdk 34
-    ndkVersion flutter.ndkVersion
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
     }
-
-    kotlinOptions {
-        jvmTarget = '17'
-    }
-
-    defaultConfig {
-        applicationId "com.bigfun.voicechat"
-        minSdk 23   // ✅ Firebase requires minSdk 23
-        targetSdk 34
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
-        multiDexEnabled true
-    }
-
-    signingConfigs {
-        release {
-            keyAlias 'bigfun'
-            keyPassword 'Bigfun@2580'
-            storeFile file('my-release-key.jks')
-            storePassword 'Bigfun@2580'
-        }
-        debug {
-            storeFile file('debug.keystore')
-        }
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-            minifyEnabled false
-            shrinkResources false
-        }
-        debug {
-            signingConfig signingConfigs.debug
-        }
-    }
-
-    configurations.all {
-        resolutionStrategy {
-            force 'com.google.firebase:firebase-auth:23.2.1'
-            force 'com.google.android.gms:play-services-auth:20.7.0'
-            force 'com.google.firebase:firebase-core:21.1.1'
-        }
+    dependencies {
+        // Android Gradle Plugin
+        classpath 'com.android.tools.build:gradle:8.3.2'
+        // Kotlin plugin
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.23"
+        // Google services (Firebase)
+        classpath 'com.google.gms:google-services:4.4.1'
     }
 }
 
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.23"
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
 
-    // ✅ Firebase BOM (latest)
-    implementation platform('com.google.firebase:firebase-bom:33.2.0')
-    implementation 'com.google.firebase:firebase-auth'
-    implementation 'com.google.firebase:firebase-firestore'
-    implementation 'com.google.firebase:firebase-storage'
+rootProject.buildDir = "../build"
 
-    // ✅ MultiDex support (fixed)
-    implementation 'androidx.multidex:multidex:2.0.1'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
 
-    // ✅ AndroidX & Material (latest stable)
-    implementation "androidx.core:core-ktx:1.13.1"
-    implementation "androidx.appcompat:appcompat:1.7.0"
-    implementation "com.google.android.material:material:1.12.0"
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
 }
