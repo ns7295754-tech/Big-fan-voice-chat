@@ -1,42 +1,56 @@
+# .github/workflows/main.yml - Updated GitHub Actions Workflow
+
 name: Build Flutter APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main, master ]
   pull_request:
+    branches: [ main, master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: temurin
-          java-version: '17'
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.19.0'
-          channel: stable
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.3'
+        channel: 'stable'
 
-      - name: Install Dependencies
-        run: flutter pub get
+    - name: Get dependencies
+      run: flutter pub get
 
-      - name: Build Debug APK
-        run: flutter build apk --debug
+    - name: Analyze project source
+      run: flutter analyze
 
-      - name: Build Release APK
-        run: flutter build apk --release
+    - name: Run tests
+      run: flutter test
 
-      - name: Upload APK artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: flutter-apks
-          path: build/app/outputs/flutter-apk/
+    - name: Build APK
+      run: flutter build apk --release
+
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release
+        path: build/app/outputs/flutter-apk/app-release.apk
+        retention-days: 30
+
+    - name: Upload build reports
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: build-reports
+        path: build/reports/
+        retention-days: 7
