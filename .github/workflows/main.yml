@@ -1,56 +1,55 @@
-name: BigFun Voice Chat - Build APK
+name: Build BigFun Voice Chat APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
 
 jobs:
   build:
-    name: Build Flutter APK
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: 📥 Checkout Repository
+    - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: ☕ Setup Java 17
+
+    - name: Setup Java
       uses: actions/setup-java@v4
       with:
         distribution: 'zulu'
         java-version: '17'
-    
-    - name: 🐦 Setup Flutter
+
+    - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
         flutter-version: '3.19.0'
         channel: 'stable'
-        cache: true
-    
-    - name: 📦 Get Flutter Dependencies
+
+    - name: Clean build cache
+      run: |
+        flutter clean
+        rm -rf ~/.pub-cache
+
+    - name: Install dependencies
       run: flutter pub get
-    
-    - name: 🔍 Analyze Code
-      run: flutter analyze --no-fatal-infos
-      continue-on-error: true
-    
-    - name: 🧪 Run Tests
-      run: flutter test
-      continue-on-error: true
-    
-    - name: 🏗️ Build Debug APK
-      run: flutter build apk --debug --verbose
-    
-    - name: 📤 Upload Debug APK
+
+    - name: Create google-services.json
+      run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+
+    - name: Create keystore
+      run: echo '${{ secrets.KEYSTORE_BASE64 }}' | base64 -d > android/app/my-release-key.jks
+      if: github.event_name == 'push'
+
+    - name: Build Debug APK
+      run: flutter build apk --debug
+
+    - name: Build Release APK
+      run: flutter build apk --release --split-per-abi
+      if: github.event_name == 'push'
+
+    - name: Upload APK artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: bigfun-voice-chat-debug
-        path: build/app/outputs/flutter-apk/app-debug.apk
-        retention-days: 7
-    
-    - name: 📊 Build Summary
-      run: |
-        echo "🎉 Build completed successfully!"
-        echo "📱 APK Location: build/app/outputs/flutter-apk/app-debug.apk"
-        ls -la build/app/outputs/flutter-apk/
+        name: bigfun-apk
+        path: build/app/outputs/flutter-apk/*.apk
