@@ -3,8 +3,6 @@ name: Build Flutter Release APK
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
 
 jobs:
   build:
@@ -18,30 +16,31 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: '11'
+          java-version: '17'
 
-      - name: Set up Flutter (older stable for compatibility)
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.13.9'
+          flutter-version: '3.19.0'
           channel: 'stable'
 
-      - name: Cache Gradle files
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/release-keystore.jks
+
+      - name: Configure key.properties
+        run: |
+          echo "storePassword=Bigfun@2580" > android/key.properties
+          echo "keyPassword=Bigfun@2580" >> android/key.properties
+          echo "keyAlias=bigfun" >> android/key.properties
+          echo "storeFile=release-keystore.jks" >> android/key.properties
 
       - name: Clean and get packages
         run: |
           flutter clean
           flutter pub get
 
-      - name: Build APK (Release)
+      - name: Build APK (Release Signed)
         run: flutter build apk --release
 
       - name: Upload Release APK
