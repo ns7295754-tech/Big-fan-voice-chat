@@ -23,7 +23,7 @@ jobs:
       - name: Set up Flutter  
         uses: subosito/flutter-action@v2  
         with:  
-          flutter-version: '3.19.0'  
+          flutter-version: '3.35.4'   # ✅ Fix করা হলো
           channel: 'stable'  
 
       - name: Cache Gradle files  
@@ -48,5 +48,4 @@ jobs:
         uses: actions/upload-artifact@v4  
         with:  
           name: flutter-debug-apk  
-          path: build/app/outputs/flutter-apk/app-debug.apk  
-          if-no-files-found: error
+          path: build/app/outputs/apk/debug/app-debug.apk
