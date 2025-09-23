@@ -1,45 +1,51 @@
-name: Flutter Build
+name: Build Signed Flutter APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.3'
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Decode keystore
-        run: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/release.keystore
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-
-      - name: Create key.properties
-        run: |
-          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
-          echo "storeFile=release.keystore" >> android/key.properties
-
-      - name: Build APK (release signed)
-        run: flutter build apk --release
-
-      - name: Upload signed APK
-        uses: actions/upload-artifact@v3
-        with:
-          name: signed-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '11'
+        
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
+        cache: true
+        
+    - name: Get Flutter dependencies
+      run: flutter pub get
+      
+    - name: Create keystore file
+      run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/release.keystore
+      
+    - name: Create key.properties
+      run: |
+        echo "storePassword=${{ secrets.STORE_PASSWORD }}" > android/key.properties
+        echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+        echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+        echo "storeFile=release.keystore" >> android/key.properties
+        
+    - name: Build APK
+      run: flutter build apk --release --no-tree-shake-icons
+      
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: signed-apk
+        path: build/app/outputs/flutter-apk/app-release.apk
+        retention-days: 30
