@@ -31,7 +31,7 @@ jobs:
       - name: Ensure gradle wrapper exists
         run: |
           if [ ! -f android/gradlew ]; then
-            echo "Gradle wrapper missing: regenerating android wrapper via flutter create (safe)"
+            echo "⚠️ Gradle wrapper missing. Regenerating via flutter create..."
             flutter create -t app temp_restore_dir
             cp -r temp_restore_dir/android/gradle android/gradle
             cp -r temp_restore_dir/android/gradlew android/gradlew
@@ -42,13 +42,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo "📦 Installing dependencies..."
+          echo "📦 Installing Flutter dependencies..."
           flutter pub get
 
       - name: Decode keystore (if provided)
         if: ${{ secrets.ANDROID_KEYSTORE != '' }}
         run: |
-          echo "🔑 Decoding keystore..."
+          echo "🔑 Setting up release keystore..."
           mkdir -p android/app
           echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 --decode > android/app/release-keystore.jks
           echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
@@ -64,11 +64,11 @@ jobs:
       - name: Build Release APK
         run: |
           echo "🚀 Building release APK..."
-          flutter build apk --release --no-shrink --verbose || (echo "Release build failed" && exit 1)
+          flutter build apk --release --no-shrink --verbose || (echo "❌ Release build failed" && exit 1)
 
       - name: List APKs
         run: |
-          echo "Listing generated APKs..."
+          echo "📂 Generated APK files:"
           find build -type f -name "*.apk" -exec ls -lh {} \; || true
 
       - name: Upload artifacts
