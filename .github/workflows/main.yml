@@ -1,104 +1,63 @@
-name: Build Flutter APK (final)
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services"
+}
 
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+android {
+    namespace "com.bigfun.voicechat"   // ✅ তোমার প্যাকেজ নাম
+    compileSdkVersion 34
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    defaultConfig {
+        applicationId "com.bigfun.voicechat"   // ✅ অ্যাপ আইডি
+        minSdkVersion 21
+        targetSdkVersion 34
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+    }
 
-      - name: Set up Java (needed for Android builds)
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: '11'
+    signingConfigs {
+        debug {
+            storeFile file("../debug.keystore")
+        }
+        release {
+            if (project.hasProperty("KEYSTORE_FILE")) {
+                storeFile file(KEYSTORE_FILE)
+                storePassword KEYSTORE_PASSWORD
+                keyAlias KEY_ALIAS
+                keyPassword KEY_PASSWORD
+            }
+        }
+    }
 
-      # <-- If your pubspec needs a different SDK, change flutter-version below -->
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.3.5'
-          channel: 'stable'
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+        debug {
+            signingConfig signingConfigs.debug
+        }
+    }
 
-      - name: Cache Gradle and Pub cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ${{ env.HOME }}/.pub-cache
-          key: ${{ runner.os }}-build-cache-${{ hashFiles('**/pubspec.lock', '**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-build-cache-
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
 
-      - name: Diagnose repo & show pubspec sdk (for debugging)
-        run: |
-          echo "PWD: $(pwd)"
-          ls -la
-          if [ -f "pubspec.yaml" ]; then
-            echo "---- pubspec environment ----"
-            sed -n '1,120p' pubspec.yaml | sed -n '/environment/,/flutter/p' || true
-          else
-            echo "No pubspec.yaml found in repo root"
-          fi
+    kotlinOptions {
+        jvmTarget = "11"
+    }
 
-      - name: Ensure Android project structure (create if missing)
-        run: |
-          if [ ! -f "android/gradlew" ]; then
-            echo "android/gradlew NOT found — running flutter create to regenerate android/ios folders (safe operation)"
-            flutter create -t app .
-          else
-            echo "android/gradlew exists — leaving android/ folder as-is"
-          fi
+    buildFeatures {
+        viewBinding true
+    }
+}
 
-      - name: Force set minSdkVersion = 21 (if build.gradle exists)
-        run: |
-          if [ -f android/app/build.gradle ]; then
-            echo "Patching minSdkVersion to 21 (if present)..."
-            sed -i 's/minSdkVersion [0-9]\+/minSdkVersion 21/' android/app/build.gradle || true
-            echo "minSdkVersion now:"
-            grep -n "minSdkVersion" android/app/build.gradle || true
-          else
-            echo "android/app/build.gradle not found — skipping minSdk patch"
-          fi
-
-      - name: Ensure gradlew executable (if present)
-        run: |
-          if [ -f android/gradlew ]; then chmod +x android/gradlew; echo "gradlew is executable"; else echo "no gradlew to chmod"; fi
-
-      - name: Clean and get packages
-        run: |
-          flutter clean
-          flutter pub get
-
-      - name: Build APK (Debug)
-        run: |
-          echo "Building Debug APK..."
-          flutter build apk --debug --no-shrink || (echo "Debug build failed"; exit 1)
-
-      - name: Build APK (Release)
-        run: |
-          echo "Building Release APK..."
-          # Use debug signing for release test if no release keystore; this produces a usable APK for testing
-          flutter build apk --release --no-shrink || (echo "Release build failed"; exit 1)
-
-      - name: List generated APK files
-        run: |
-          echo "Looking for APKs under build/ ..."
-          find build -type f -name "*.apk" -exec ls -lh {} \; || echo "No APKs found"
-
-      - name: Upload all APK artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: flutter-apks
-          path: |
-            build/app/outputs/flutter-apk/*.apk
-            build/app/outputs/apk/**/*.apk
-            build/**/*.apk
-          if-no-files-found: warn
+dependencies {
+    implementation "androidx.multidex:multidex:2.0.1"
+}
