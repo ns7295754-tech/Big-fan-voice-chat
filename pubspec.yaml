@@ -1,52 +1,63 @@
-name: bigfun_voice
-description: BigFun Voice Chat with all features working
-publish_to: 'none'
-version: 1.0.0+1
+name: Build BigFun Voice Chat APK
 
-environment:
-  sdk: ">=3.3.0 <4.0.0"
-  flutter: ">=3.19.0"
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
-dependencies:
-  flutter:
-    sdk: flutter
-
-  # Firebase - Updated versions for compatibility
-  firebase_core: ^3.6.0
-  firebase_auth: ^5.3.3
-  cloud_firestore: ^5.4.4
-  firebase_storage: ^12.3.2
-
-  # Voice Chat - Agora
-  agora_rtc_engine: ^6.4.2
-  permission_handler: ^11.3.1
-
-  # State Management & Core
-  provider: ^6.1.2
-  http: ^1.2.2
-  shared_preferences: ^2.3.2
-
-  # UI Components
-  flutter_svg: ^2.0.10+1
-  cupertino_icons: ^1.0.8
-
-  # Additional utilities for your features
-  uuid: ^4.5.1
-  intl: ^0.19.0
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^4.0.0
-  flutter_launcher_icons: ^0.14.1
-
-flutter_icons:
-  android: true
-  ios: true
-  image_path: "assets/images/app_icon.png"
-
-flutter:
-  uses-material-design: true
-  assets:
-    - assets/images/
-    - assets/audio/
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+    
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
+    
+    - name: Install dependencies
+      run: flutter pub get
+    
+    - name: Analyze project source
+      run: flutter analyze
+    
+    - name: Run tests
+      run: flutter test
+    
+    - name: Create google-services.json
+      run: |
+        echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+    
+    - name: Create keystore
+      run: |
+        echo '${{ secrets.KEYSTORE_BASE64 }}' | base64 -d > android/app/my-release-key.jks
+      if: github.event_name == 'push'
+    
+    - name: Build APK Debug
+      run: flutter build apk --debug
+    
+    - name: Build APK Release
+      run: flutter build apk --release
+      if: github.event_name == 'push'
+      env:
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+    
+    - name: Upload APK artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: bigfun-apk
+        path: |
+          build/app/outputs/flutter-apk/app-debug.apk
+          build/app/outputs/flutter-apk/app-release.apk
