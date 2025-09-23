@@ -1,7 +1,6 @@
-name: bigfun_voice_chat
+name: bigfan_voice_chat
 description: A new Flutter project.
-
-publish_to: "none" # Remove this line if you plan to publish on pub.dev
+publish_to: 'none'
 
 version: 1.0.0+1
 
@@ -12,26 +11,25 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^1.0.2
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.4
+  firebase_storage: ^12.3.2
   provider: ^6.1.2
-  shared_preferences: ^2.2.3
-  intl: ^0.19.0
   http: ^1.2.2
   agora_rtc_engine: ^6.3.2
   permission_handler: ^11.3.1
+  shared_preferences: ^2.2.3
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
-
   assets:
     - assets/images/
-    - assets/audio/
+    - assets/icons/
