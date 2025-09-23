@@ -1,74 +1,49 @@
-name: Build Flutter Release APK
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services" // Only if you use Firebase
+}
 
-on:
-  push:
-    branches: [ main, master ]
+android {
+    namespace "com.example.bigfun"  // Change this to your package name
+    compileSdkVersion 34
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+    defaultConfig {
+        applicationId "com.example.bigfun" // Change this to your app package name
+        minSdkVersion 21
+        targetSdkVersion 34
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+    }
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug // Replace with release config when you add keystore
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+        debug {
+            signingConfig signingConfigs.debug
+        }
+    }
 
-      - name: Set up Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: '17'
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.19.0'
-          channel: 'stable'
+    kotlinOptions {
+        jvmTarget = "11"
+    }
 
-      - name: Prepare Android project
-        run: |
-          mkdir -p android/app/src/main/kotlin/com/example/big_fan_voice_chat
-          mkdir -p android/gradle/wrapper
+    buildFeatures {
+        viewBinding true
+    }
+}
 
-          # ✅ gradle-wrapper.properties
-          cat > android/gradle/wrapper/gradle-wrapper.properties << 'EOF'
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          zipStoreBase=GRADLE_USER_HOME
-          zipStorePath=wrapper/dists
-          distributionUrl=https://services.gradle.org/distributions/gradle-7.5-all.zip
-          EOF
-
-          # ✅ local.properties
-          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-          echo "sdk.dir=$ANDROID_HOME" >> android/local.properties
-          chmod +x android/gradlew
-
-      - name: Decode keystore
-        run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/release-keystore.jks
-
-      - name: Configure key.properties
-        run: |
-          echo "storePassword=Bigfun@2580" > android/key.properties
-          echo "keyPassword=Bigfun@2580" >> android/key.properties
-          echo "keyAlias=bigfun" >> android/key.properties
-          echo "storeFile=release-keystore.jks" >> android/key.properties
-
-      - name: Clean and get packages
-        run: |
-          flutter clean
-          flutter pub get
-
-      - name: Build APK (Release Signed)
-        run: |
-          echo "🚀 Starting release APK build..."
-          flutter build apk --release --verbose
-          echo "✅ Build completed. Checking for APK..."
-          find . -name "*.apk" -type f -exec ls -lh {} \;
-
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: flutter-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: error
+dependencies {
+    implementation "androidx.multidex:multidex:2.0.1"
+}
