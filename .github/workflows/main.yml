@@ -1,16 +1,58 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+name: Build Flutter APK
 
-// Use the same name as in your pubspec.yaml
-// Example: if pubspec.yaml has name: bigfun_voice
-import 'package:bigfun_voice/main.dart';
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
-void main() {
-  testWidgets('App smoke test', (WidgetTester tester) async {
-    // Build the app and trigger a frame
-    await tester.pumpWidget(const MyApp()); // Replace MyApp with your main widget if different
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-    // Verify that the app starts with a MaterialApp widget
-    expect(find.byType(MaterialApp), findsOneWidget);
-  });
-}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '11'
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
+
+    - name: Create local.properties
+      run: |
+        echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+        echo "sdk.dir=$ANDROID_HOME" >> android/local.properties
+
+    - name: Clean Flutter
+      run: flutter clean
+
+    - name: Get dependencies
+      run: flutter pub get
+
+    - name: Analyze code
+      run: flutter analyze --no-fatal-warnings || true
+
+    - name: Run tests (if any)
+      run: |
+        if [ -d "test" ]; then
+          flutter test
+        else
+          echo "No test directory found, skipping tests"
+        fi
+
+    - name: Build Debug APK
+      run: flutter build apk --debug --verbose
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-apk
+        path: build/app/outputs/flutter-apk/app-debug.apk
