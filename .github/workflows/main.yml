@@ -50,12 +50,81 @@ jobs:
         echo "Created test directory and basic test file"
         ls -la test/
 
-    - name: Create local.properties
+    - name: Fix Gradle project structure
       run: |
-        mkdir -p android
-        echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-        echo "sdk.dir=$ANDROID_HOME" >> android/local.properties
-        echo "Created local.properties"
+        echo "Fixing Gradle project structure..."
+        
+        # Check if we're in the right directory
+        if [ ! -f "pubspec.yaml" ]; then
+          echo "pubspec.yaml not found in current directory"
+          exit 1
+        fi
+        
+        # Ensure proper Android Gradle structure
+        mkdir -p android/gradle/wrapper
+        
+        # Create proper gradle-wrapper.properties
+        cat > android/gradle/wrapper/gradle-wrapper.properties << 'EOF'
+        distributionBase=GRADLE_USER_HOME
+        distributionPath=wrapper/dists
+        zipStoreBase=GRADLE_USER_HOME
+        zipStorePath=wrapper/dists
+        distributionUrl=https\://services.gradle.org/distributions/gradle-7.5-all.zip
+        EOF
+        
+        # Ensure android/settings.gradle exists with correct content
+        cat > android/settings.gradle << 'EOF'
+        include ':app'
+
+        def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
+        def properties = new Properties()
+
+        assert localPropertiesFile.exists()
+        localPropertiesFile.withReader("UTF-8") { reader -> properties.load(reader) }
+
+        def flutterSdkPath = properties.getProperty("flutter.sdk")
+        assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
+        apply from: "$flutterSdkPath/packages/flutter_tools/gradle/app_plugin_loader.gradle"
+        EOF
+        
+        # Fix android/build.gradle
+        if [ ! -f "android/build.gradle" ]; then
+          cat > android/build.gradle << 'EOF'
+        buildscript {
+            ext.kotlin_version = '1.7.10'
+            repositories {
+                google()
+                mavenCentral()
+            }
+
+            dependencies {
+                classpath 'com.android.tools.build:gradle:7.3.0'
+                classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+            }
+        }
+
+        allprojects {
+            repositories {
+                google()
+                mavenCentral()
+            }
+        }
+
+        rootProject.buildDir = '../build'
+        subprojects {
+            project.buildDir = "${rootProject.buildDir}/${project.name}"
+        }
+        subprojects {
+            project.evaluationDependsOn(':app')
+        }
+
+        task clean(type: Delete) {
+            delete rootProject.buildDir
+        }
+        EOF
+        fi
+        
+        echo "Gradle project structure fixed"
 
     - name: Clean Flutter
       run: flutter clean
@@ -75,10 +144,24 @@ jobs:
 
     - name: Build Debug APK
       run: |
-        echo "Starting APK build..."
-        flutter build apk --debug --verbose || {
-          echo "Build failed, trying alternative approach..."
-          flutter build apk --debug --no-shrink --target-platform android-arm64
+        echo "Starting APK build with fixed Gradle structure..."
+        
+        # Clean everything first
+        flutter clean
+        
+        # Regenerate files
+        flutter pub get
+        
+        # Try building with specific gradle setup
+        cd android && ./gradlew clean && cd ..
+        
+        # Build APK with simpler approach first
+        flutter build apk --debug --verbose --no-sound-null-safety || {
+          echo "First attempt failed, trying with different settings..."
+          flutter build apk --debug --no-shrink --target-platform android-arm64 --no-sound-null-safety || {
+            echo "Second attempt failed, trying basic build..."
+            flutter build apk --debug
+          }
         }
         
         echo "Build process completed. Searching for APK files..."
@@ -88,7 +171,7 @@ jobs:
         APK_FOUND=false
         for path in "build/app/outputs/flutter-apk/app-debug.apk" "build/app/outputs/apk/debug/app-debug.apk" $(find build/ -name "*.apk" 2>/dev/null | head -1); do
           if [ -f "$path" ]; then
-            echo "✅ APK found at: $path"
+            echo "APK found at: $path"
             ls -la "$path"
             APK_FOUND=true
             break
@@ -96,7 +179,8 @@ jobs:
         done
         
         if [ "$APK_FOUND" = false ]; then
-          echo "⚠️ APK not found, but continuing workflow"
+          echo "APK not found, checking build errors..."
+          ls -la build/ || echo "Build directory does not exist"
         fi
       continue-on-error: true
 
