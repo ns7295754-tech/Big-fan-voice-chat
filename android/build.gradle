@@ -1,3 +1,7 @@
+// ========================
+// 1. android/app/build.gradle (COMPLETE FIX)
+// ========================
+
 plugins {
     id 'com.android.application'
     id 'com.google.gms.google-services'
@@ -7,18 +11,29 @@ plugins {
 android {
     namespace "com.bigfun.voiceapp"
     compileSdk 34
+    ndkVersion flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
 
     defaultConfig {
         applicationId "com.bigfun.voiceapp"
-        minSdk 23          // ✅ Updated from 21 → 23 (fixes Firebase error)
+        minSdk 24          // ✅ CRITICAL: Change to 24 (Firebase Auth requires this)
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+        multiDexEnabled true    // ✅ Add this for large apps
     }
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
         }
@@ -27,27 +42,149 @@ android {
         }
     }
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = '17'
+    // ✅ Force resolution of conflicting dependencies
+    configurations.all {
+        resolutionStrategy {
+            force 'com.google.firebase:firebase-auth:22.3.1'  // Use stable version
+            force 'com.google.android.gms:play-services-auth:20.7.0'
+        }
     }
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.23"
-
-    // ✅ Firebase dependencies
-    implementation "com.google.firebase:firebase-auth:23.2.1"
-    implementation "com.google.firebase:firebase-database:20.3.0"
-    implementation "com.google.firebase:firebase-storage:20.3.0"
-    implementation platform("com.google.firebase:firebase-bom:33.2.0")
-
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.10"
+    
+    // ✅ Use Firebase BOM for version management
+    implementation platform('com.google.firebase:firebase-bom:32.8.0')
+    implementation 'com.google.firebase:firebase-auth-ktx'
+    implementation 'com.google.firebase:firebase-firestore-ktx'
+    implementation 'com.google.firebase:firebase-storage-ktx'
+    implementation 'com.google.firebase:firebase-database-ktx'
+    
+    // ✅ Required for MultiDex
+    implementation 'androidx.multidex:multidx:2.0.1'
+    
     // ✅ AndroidX & Material
-    implementation "androidx.core:core-ktx:1.13.1"
-    implementation "androidx.appcompat:appcompat:1.7.0"
-    implementation "com.google.android.material:material:1.12.0"
+    implementation "androidx.core:core-ktx:1.12.0"
+    implementation "androidx.appcompat:appcompat:1.6.1"
+    implementation "com.google.android.material:material:1.11.0"
 }
+
+// ========================
+// 2. android/build.gradle (Project level)
+// ========================
+
+buildscript {
+    ext.kotlin_version = '1.9.10'
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.4'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.google.gms:google-services:4.4.0'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
+
+// ========================
+// 3. android/gradle/wrapper/gradle-wrapper.properties
+// ========================
+
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.0-all.zip
+
+// ========================
+// 4. android/app/src/main/AndroidManifest.xml
+// ========================
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permissions for Voice Chat App -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <application
+        android:label="BigFun Voice"
+        android:name="androidx.multidex.MultiDexApplication"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        tools:replace="android:label,android:allowBackup">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme" />
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+</manifest>
+
+// ========================
+// 5. TERMINAL COMMANDS (Run these in sequence)
+// ========================
+
+// Step 1: Complete cleanup
+flutter clean
+rm -rf android/.gradle
+rm -rf android/app/build
+rm -rf android/build
+
+// Step 2: Get dependencies
+flutter pub get
+
+// Step 3: Clean Gradle
+cd android
+./gradlew clean
+cd ..
+
+// Step 4: Build with detailed logs
+flutter build apk --debug --verbose
+
+// If successful, then build release:
+flutter build apk --release
