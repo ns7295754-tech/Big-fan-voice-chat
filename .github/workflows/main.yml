@@ -1,4 +1,4 @@
-name: Flutter CI - BigFun Voice
+name: Build Flutter APK
 
 on:
   push:
@@ -11,39 +11,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '11'
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.19.0'
-          channel: 'stable'
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
 
-      - name: Install dependencies
-        run: flutter pub get
+    - name: Create local.properties
+      run: |
+        echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+        echo "sdk.dir=$ANDROID_HOME" >> android/local.properties
 
-      - name: Analyze code
-        run: flutter analyze --no-fatal-infos
-        continue-on-error: true
+    - name: Clean Flutter
+      run: flutter clean
 
-      - name: Run tests (if any)
-        run: flutter test || echo "No tests found"
+    - name: Get dependencies
+      run: flutter pub get
 
-      - name: Build Debug APK
-        run: flutter build apk --debug
+    - name: Analyze code
+      run: flutter analyze
 
-      - name: Build Release APK
-        run: flutter build apk --release
+    - name: Run tests
+      run: flutter test
 
-      - name: Upload APKs
-        uses: actions/upload-artifact@v4
-        with:
-          name: bigfun-apks
-          path: build/app/outputs/flutter-apk/*.apk
+    - name: Build Debug APK
+      run: flutter build apk --debug --verbose
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: debug-apk
+        path: build/app/outputs/flutter-apk/app-debug.apk
