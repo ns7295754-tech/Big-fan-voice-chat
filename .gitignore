@@ -1,0 +1,49 @@
+# Flutter/Dart/Pub related
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+
+# Symbolication related
+app.*.symbols
+
+# Obsolete files
+*.lock
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code related
+.vscode/
+.history/
+
+# Mac related
+.DS_Store
+
+# Android related
+.gradle/
+captures/
+local.properties
+*.keystore
+*.jks
+*.bak
+*.tmp
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+
+# Generated plugin registrant
+lib/generated_plugin_registrant.dart
+
+# Flutter build outputs
+flutter_export_environment.sh
