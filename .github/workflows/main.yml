@@ -1,187 +1,41 @@
-# ১. pubspec.yaml ফাইল সংশোধন - package name fix
-name: bigfanvoicechat
-description: A new Flutter project.
-publish_to: 'none'
+name: Build Flutter APK
 
-version: 1.0.0+1
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-environment:
-  sdk: ">=3.4.0 <4.0.0"
-  flutter: ">=3.0.0"
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-dependencies:
-  flutter:
-    sdk: flutter
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.15.3
-  cloud_firestore: ^4.13.6
-  provider: ^6.1.1
-  shared_preferences: ^2.2.2
-  intl: ^0.19.0
-  http: ^1.1.2
-  agora_rtc_engine: ^6.3.2
-  permission_handler: ^11.1.0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^3.0.0
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
 
-flutter:
-  uses-material-design: true
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.4'
+          channel: 'stable'
 
----
+      - name: Install dependencies
+        run: |
+          flutter clean
+          flutter pub get
 
-# ২. android/app/build.gradle - applicationId সংশোধন
-def localProperties = new Properties()
-def localPropertiesFile = rootProject.file('local.properties')
-if (localPropertiesFile.exists()) {
-    localPropertiesFile.withReader('UTF-8') { reader ->
-        localProperties.load(reader)
-    }
-}
+      - name: Build APK
+        run: flutter build apk --debug --verbose
 
-def flutterRoot = localProperties.getProperty('flutter.sdk')
-if (flutterRoot == null) {
-    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
-}
-
-def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
-if (flutterVersionCode == null) {
-    flutterVersionCode = '1'
-}
-
-def flutterVersionName = localProperties.getProperty('flutter.versionName')
-if (flutterVersionName == null) {
-    flutterVersionName = '1.0'
-}
-
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
-
-android {
-    compileSdkVersion 34
-    ndkVersion flutter.ndkVersion
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = '17'
-    }
-
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-    }
-
-    defaultConfig {
-        applicationId "com.example.bigfanvoicechat"
-        minSdkVersion 21
-        targetSdkVersion 34
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
-        multiDexEnabled true
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            shrinkResources false
-            signingConfig signingConfigs.debug
-        }
-        debug {
-            signingConfig signingConfigs.debug
-        }
-    }
-}
-
-flutter {
-    source '../..'
-}
-
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    implementation 'androidx.multidex:multidex:2.0.1'
-}
-
----
-
-# ৩. android/app/src/main/AndroidManifest.xml - package attribute সংশোধন
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.bigfanvoicechat">
-    
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <application
-        android:label="bigfanvoicechat"
-        android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
-        
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTop"
-            android:taskAffinity=""
-            android:theme="@style/LaunchTheme"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-            android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
-            
-            <meta-data
-                android:name="io.flutter.embedding.android.NormalTheme"
-                android:resource="@style/NormalTheme" />
-            
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-        
-        <meta-data
-            android:name="flutterEmbedding"
-            android:value="2" />
-    </application>
-    
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="https" />
-        </intent>
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="http" />
-        </intent>
-    </queries>
-</manifest>
-
----
-
-# ৪. android/app/src/debug/AndroidManifest.xml
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.bigfanvoicechat">
-    
-    <uses-permission android:name="android.permission.INTERNET"/>
-</manifest>
-
----
-
-# ৥. android/app/src/profile/AndroidManifest.xml  
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.bigfanvoicechat">
-    
-    <uses-permission android:name="android.permission.INTERNET"/>
-</manifest>
-
----
-
-# Commands to run after fixing:
-# flutter clean
-# flutter pub get
-# flutter build apk --debug
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
