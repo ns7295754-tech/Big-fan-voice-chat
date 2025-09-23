@@ -23,19 +23,8 @@ jobs:
       - name: Set up Flutter  
         uses: subosito/flutter-action@v2  
         with:  
-          flutter-version: '3.35.4'   # ✅ Force latest Flutter
+          flutter-version: '3.24.4'   # ✅ এই ভার্সনে Dart 3.4.4 আছে
           channel: 'stable'  
-
-      # ❌ Cache বাদ দিলাম, fresh install হবে
-      # - name: Cache Gradle files  
-      #   uses: actions/cache@v3  
-      #   with:  
-      #     path: |  
-      #       ~/.gradle/caches  
-      #       ~/.gradle/wrapper  
-      #     key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}  
-      #     restore-keys: |  
-      #       ${{ runner.os }}-gradle-  
 
       - name: Clean and get packages  
         run: |  
