@@ -41,28 +41,43 @@ jobs:
           cp -r assets temp_project/ || echo "No assets directory"
           cp -r test temp_project/ || echo "No test directory"
 
-      - name: Create clean pubspec.yaml
+      - name: Create clean pubspec.yaml with features
         run: |
           cat > temp_project/pubspec.yaml << 'EOF'
           name: ${{ steps.app_name.outputs.name }}
-          description: A new Flutter project
+          description: BigFun Voice Chat with Gifting, OTP Login, Wallet, Profiles
           version: 1.0.0+1
           
           environment:
-            sdk: '>=2.19.0 <4.0.0'
+            sdk: ">=3.3.0 <4.0.0"
           
           dependencies:
             flutter:
               sdk: flutter
-            cupertino_icons: ^1.0.2
-          
+            cupertino_icons: ^1.0.8
+            provider: ^6.1.2
+
+            # Firebase core (required)
+            firebase_core: ^3.6.0
+
+            # Firestore database
+            cloud_firestore: ^5.4.4
+
+            # Firebase Auth (OTP Login)
+            firebase_auth: ^5.3.3
+
+            # Agora Voice Chat SDK
+            agora_rtc_engine: ^6.4.2
+
           dev_dependencies:
             flutter_test:
               sdk: flutter
-            flutter_lints: ^2.0.0
+            flutter_lints: ^4.0.0
           
           flutter:
             uses-material-design: true
+            assets:
+              - assets/
           EOF
 
       - name: Update Android config
