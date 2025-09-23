@@ -1,5 +1,10 @@
 buildscript {
     ext.kotlin_version = '1.8.22'
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
     
     dependencies {
         classpath 'com.android.tools.build:gradle:8.0.2'
@@ -8,7 +13,10 @@ buildscript {
 }
 
 allprojects {
-    // Repositories managed by settings.gradle
+    repositories {
+        google()
+        mavenCentral()
+    }
 }
 
 rootProject.buildDir = '../build'
