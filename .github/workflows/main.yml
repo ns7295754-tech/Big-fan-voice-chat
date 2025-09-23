@@ -1,56 +1,71 @@
-# .github/workflows/main.yml - Fixed GitHub Actions Workflow
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
 
-name: Build Flutter APK
+def flutterRoot = localProperties.getProperty('flutter.sdk')
+if (flutterRoot == null) {
+    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
+}
 
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
 
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
-    - name: Set up Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'zulu'
-        java-version: '17'
+android {
+    namespace "com.bigfun.voicechat"
+    compileSdkVersion 34
+    ndkVersion flutter.ndkVersion
 
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.24.3'
-        channel: 'stable'
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 
-    - name: Get dependencies
-      run: flutter pub get
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
 
-    - name: Analyze project source
-      run: flutter analyze --no-fatal-infos
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
 
-    - name: Run tests
-      run: flutter test --no-pub
+    defaultConfig {
+        applicationId "com.bigfun.voicechat"
+        minSdkVersion 21
+        targetSdkVersion 34
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+        multiDexEnabled true
+    }
 
-    - name: Build APK
-      run: flutter build apk --release
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
+        }
+    }
+}
 
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-release
-        path: build/app/outputs/flutter-apk/app-release.apk
-        retention-days: 30
+flutter {
+    source '../..'
+}
 
-    - name: Upload build reports
-      uses: actions/upload-artifact@v4
-      if: failure()
-      with:
-        name: build-reports
-        path: build/reports/
-        retention-days: 7
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'androidx.multidex:multidex:2.0.1'
+}
