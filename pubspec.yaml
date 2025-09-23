@@ -14,13 +14,13 @@ dependencies:
   # Firebase core (required for Firestore)
   firebase_core: ^3.6.0
 
-  # Firestore (compatible with Flutter 3.24.3)
+  # Firestore (for wallet, gifts, profiles, etc.)
   cloud_firestore: ^5.4.4
 
-  # Firebase Authentication (for phone OTP login if needed)
+  # Firebase Authentication (for phone OTP login)
   firebase_auth: ^5.3.3
 
-  # Voice chat SDK (example: Agora – replace if using another one)
+  # Voice chat SDK (Agora – for voice rooms)
   agora_rtc_engine: ^6.4.2
 
   # State management
@@ -36,3 +36,16 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/images/background.png
+    - assets/images/banner.png
+    - assets/images/crown.png
+    - assets/images/gift.png
+    - assets/images/home.png
+    - assets/images/mic.png
+    - assets/images/profile.png
+    - assets/images/rocket.png
+    - assets/images/star.png
+    - assets/images/wallet.png
+    - assets/images/app_icon.png
