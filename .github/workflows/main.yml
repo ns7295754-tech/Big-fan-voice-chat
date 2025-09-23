@@ -42,24 +42,19 @@ jobs:
         run: flutter pub get
 
       - name: Quick fix: ensure minSdk >= 23 (non-fatal)
-        # This is a safety step so CI doesn't fail for common minSdk mismatch.
-        # Prefer to make this change permanently in your repo android/app/build.gradle.
         run: |
           if [ -f "android/app/build.gradle" ]; then
             echo "Checking minSdk in android/app/build.gradle..."
-            # replace any minSdkVersion N with minSdkVersion 23 (only if lower)
             awk '{
-              if (match($0, /minSdkVersion[[:space:]]+[0-9]+/)) {
-                line=$0
-                if (match(line, /minSdkVersion[[:space:]]+([0-9]+)/, a)) {
-                  if (a[1] < 23) {
-                    sub(/minSdkVersion[[:space:]]+[0-9]+/, "minSdkVersion 23")
-                  }
+              if ($0 ~ /minSdkVersion[[:space:]]+[0-9]+/) {
+                match($0, /minSdkVersion[[:space:]]+([0-9]+)/, a)
+                if (a[1] < 23) {
+                  sub(/minSdkVersion[[:space:]]+[0-9]+/, "minSdkVersion 23")
                 }
               }
-              print $0
-            }' android/app/build.gradle > android/app/build.gradle.ci || true
-            if [ -f android/app/build.gradle.ci ]; then mv android/app/build.gradle.ci android/app/build.gradle; fi
+              print
+            }' android/app/build.gradle > android/app/build.gradle.ci
+            mv android/app/build.gradle.ci android/app/build.gradle
           else
             echo "No android/app/build.gradle found — skipping minSdk fix."
           fi
