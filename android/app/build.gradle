@@ -1,16 +1,15 @@
 plugins {
     id "com.android.application"
-    id "kotlin-android"
-    id "dev.flutter.flutter-gradle-plugin"
+    id "org.jetbrains.kotlin.android"   // Correct Kotlin plugin
     id "com.google.gms.google-services"
 }
 
 android {
-    namespace "com.bigfun.voicechat"   // ✅ তোমার প্যাকেজ নাম
+    namespace "com.example.bigfun"   // <-- Replace with your package name
     compileSdkVersion 34
 
     defaultConfig {
-        applicationId "com.bigfun.voicechat"  // ✅ তোমার app id
+        applicationId "com.example.bigfun"  // <-- Replace with your app ID
         minSdkVersion 23
         targetSdkVersion 34
         versionCode 1
@@ -19,13 +18,13 @@ android {
 
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.10"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
