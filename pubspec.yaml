@@ -1,7 +1,10 @@
-name: bigfun_voice
-description: BigFun Voice Chat with Firebase, Agora, Wallet and Gift features
-publish_to: 'none'
+# ========================
+# 1. UPDATED pubspec.yaml (Based on your project report)
+# ========================
 
+name: bigfun_voice
+description: BigFun Voice Chat with all features working
+publish_to: 'none'
 version: 1.0.0+1
 
 environment:
@@ -12,30 +15,34 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Firebase
+  # Firebase - Updated versions for compatibility
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.3
   cloud_firestore: ^5.4.4
-  firebase_storage: ^11.0.0
+  firebase_storage: ^12.3.2
 
-  # Voice Chat SDK
+  # Voice Chat - Agora
   agora_rtc_engine: ^6.4.2
+  permission_handler: ^11.3.1
 
-  # Utils
+  # State Management & Core
   provider: ^6.1.2
-  shared_preferences: ^2.2.15
-  http: ^1.1.0
-  uuid: ^4.1.0
-  permission_handler: ^10.4.0
+  http: ^1.2.2
+  shared_preferences: ^2.3.2
 
-  # Icons
+  # UI Components
+  flutter_svg: ^2.0.10+1
   cupertino_icons: ^1.0.8
+
+  # Additional utilities for your features
+  uuid: ^4.5.1
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.1
 
 flutter_icons:
   android: true
@@ -46,3 +53,225 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/audio/
+
+# ========================
+# 2. android/app/build.gradle (Fixed for your project)
+# ========================
+
+plugins {
+    id 'com.android.application'
+    id 'com.google.gms.google-services'
+    id 'kotlin-android'
+}
+
+android {
+    namespace "com.bigfun.voicechat"  // Your actual package name
+    compileSdk 34
+    ndkVersion flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    defaultConfig {
+        applicationId "com.bigfun.voicechat"  // From your report
+        minSdk 24  // Required for Firebase Auth latest
+        targetSdk 34
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+        multiDexEnabled true
+    }
+
+    // Signing configs for release
+    signingConfigs {
+        release {
+            keyAlias 'bigfun'  // From your report
+            keyPassword 'Bigfun@2580'  // From your report  
+            storeFile file('my-release-key.jks')  // Your keystore
+            storePassword 'Bigfun@2580'
+        }
+        debug {
+            storeFile file('debug.keystore')
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            shrinkResources false
+        }
+        debug {
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    // Force resolve dependency conflicts
+    configurations.all {
+        resolutionStrategy {
+            force 'com.google.firebase:firebase-auth:22.3.1'
+            force 'com.google.android.gms:play-services-auth:20.7.0'
+        }
+    }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.10"
+    
+    // Firebase BOM for version management
+    implementation platform('com.google.firebase:firebase-bom:33.6.0')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
+    implementation 'com.google.firebase:firebase-storage'
+    
+    // MultiDex support
+    implementation 'androidx.multidx:multidx:2.0.1'
+    
+    // AndroidX
+    implementation "androidx.core:core-ktx:1.13.1"
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation "com.google.android.material:material:1.12.0"
+}
+
+# ========================
+# 3. android/app/src/main/AndroidManifest.xml (Voice Chat Permissions)
+# ========================
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Voice Chat Required Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    
+    <!-- For Wallet/Payment features -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <application
+        android:label="BigFun Voice Chat"
+        android:name="androidx.multidx.MultiDexApplication"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        tools:replace="android:label,android:allowBackup">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme" />
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+</manifest>
+
+# ========================
+# 4. STEP BY STEP TERMINAL COMMANDS
+# ========================
+
+# Step 1: Complete cleanup
+flutter clean
+rm -rf android/.gradle
+rm -rf android/app/build
+
+# Step 2: Update dependencies  
+flutter pub upgrade
+
+# Step 3: Get latest packages
+flutter pub get
+
+# Step 4: Clean Android build
+cd android
+./gradlew clean
+cd ..
+
+# Step 5: Check for issues
+flutter doctor
+
+# Step 6: Build debug first
+flutter build apk --debug
+
+# Step 7: If debug works, build release
+flutter build apk --release
+
+# ========================
+# 5. lib/main.dart (Ensure proper Firebase initialization)
+# ========================
+
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
+import 'services/auth_service.dart';
+import 'screens/splash_screen.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService()),
+        // Add other providers for Gift, Wallet, Voice Chat services
+      ],
+      child: MaterialApp(
+        title: 'BigFun Voice Chat',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        home: SplashScreen(),
+        routes: {
+          '/login': (context) => LoginScreen(),
+          '/home': (context) => HomeScreen(),
+          '/voice-chat': (context) => VoiceChatScreen(),
+          '/wallet': (context) => WalletScreen(),
+          '/gift': (context) => GiftScreen(),
+          '/inbox': (context) => InboxScreen(),
+          '/profile': (context) => ProfileScreen(),
+        },
+      ),
+    );
+  }
+}
+
+# ========================
+# 6. IMPORTANT FILES TO CHECK
+# ========================
+
+# Make sure these files exist:
+# - android/app/google-services.json (Your Firebase config)
+# - android/app/my-release-key.jks (Your signing keystore)
+# - assets/images/app_icon.png (Your app icon)
+
+# If any missing, let me know and I'll help you create them.
