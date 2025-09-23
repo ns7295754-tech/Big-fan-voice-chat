@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PUB_CACHE: ${{ runner.temp }}/pub-cache
 
     steps:
       - name: Checkout code
@@ -19,7 +21,7 @@ jobs:
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
       - name: Set up Flutter
@@ -28,85 +30,53 @@ jobs:
           flutter-version: '3.24.3'
           channel: 'stable'
 
-      - name: Get app name
-        id: app_name
-        run: |
-          APP_NAME=$(grep '^name:' pubspec.yaml | cut -d' ' -f2)
-          echo "name=$APP_NAME" >> $GITHUB_OUTPUT
-
-      - name: Create new Flutter project
-        run: |
-          flutter create --project-name ${{ steps.app_name.outputs.name }} temp_project
-          cp -r lib temp_project/ || echo "No lib directory"
-          cp -r assets temp_project/ || echo "No assets directory"
-          cp -r test temp_project/ || echo "No test directory"
-
-      - name: Create clean pubspec.yaml with features
-        run: |
-          cat > temp_project/pubspec.yaml << 'EOF'
-          name: ${{ steps.app_name.outputs.name }}
-          description: BigFun Voice Chat with Gifting, OTP Login, Wallet, Profiles
-          version: 1.0.0+1
-          
-          environment:
-            sdk: ">=3.3.0 <4.0.0"
-          
-          dependencies:
-            flutter:
-              sdk: flutter
-            cupertino_icons: ^1.0.8
-            provider: ^6.1.2
-
-            # Firebase core (required)
-            firebase_core: ^3.6.0
-
-            # Firestore database
-            cloud_firestore: ^5.4.4
-
-            # Firebase Auth (OTP Login)
-            firebase_auth: ^5.3.3
-
-            # Agora Voice Chat SDK
-            agora_rtc_engine: ^6.4.2
-
-          dev_dependencies:
-            flutter_test:
-              sdk: flutter
-            flutter_lints: ^4.0.0
-          
-          flutter:
-            uses-material-design: true
-            assets:
-              - assets/
-          EOF
-
-      - name: Update Android config
-        run: |
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/' temp_project/android/app/build.gradle
-          sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdk 34/' temp_project/android/app/build.gradle
-          sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 34/' temp_project/android/app/build.gradle
-
-      - name: Replace project
-        run: |
-          rm -rf android ios web linux macos windows || true
-          cp -r temp_project/* .
-          rm -rf temp_project
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PUB_CACHE }}
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run tests
+      - name: Quick fix: ensure minSdk >= 23 (non-fatal)
+        # This is a safety step so CI doesn't fail for common minSdk mismatch.
+        # Prefer to make this change permanently in your repo android/app/build.gradle.
+        run: |
+          if [ -f "android/app/build.gradle" ]; then
+            echo "Checking minSdk in android/app/build.gradle..."
+            # replace any minSdkVersion N with minSdkVersion 23 (only if lower)
+            awk '{
+              if (match($0, /minSdkVersion[[:space:]]+[0-9]+/)) {
+                line=$0
+                if (match(line, /minSdkVersion[[:space:]]+([0-9]+)/, a)) {
+                  if (a[1] < 23) {
+                    sub(/minSdkVersion[[:space:]]+[0-9]+/, "minSdkVersion 23")
+                  }
+                }
+              }
+              print $0
+            }' android/app/build.gradle > android/app/build.gradle.ci || true
+            if [ -f android/app/build.gradle.ci ]; then mv android/app/build.gradle.ci android/app/build.gradle; fi
+          else
+            echo "No android/app/build.gradle found — skipping minSdk fix."
+          fi
+
+      - name: Run tests (non-blocking)
         run: |
           if [ -d "test" ]; then
+            echo "Running flutter test (will not stop build on fail)..."
             flutter test || echo "Tests failed but continuing"
           else
-            echo "No tests found"
+            echo "No tests directory — skipping tests."
           fi
 
       - name: Build APK
         run: flutter build apk --release --split-per-abi
 
-      - name: Upload APK
+      - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
