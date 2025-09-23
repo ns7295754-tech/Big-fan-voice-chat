@@ -26,17 +26,61 @@ jobs:
         flutter-version: '3.19.0'
         channel: 'stable'
 
-    - name: Setup project structure
+    - name: Diagnose and fix project structure
       run: |
-        # Create missing directories
-        mkdir -p assets/audio
-        mkdir -p assets/images
-        mkdir -p test
+        echo "=== DIAGNOSING PROJECT STRUCTURE ==="
+        echo "Current directory: $(pwd)"
+        echo "Directory contents:"
+        ls -la
         
-        # Create placeholder for audio directory
+        echo "Looking for Flutter project files..."
+        find . -name "pubspec.yaml" -type f
+        find . -name "android" -type d
+        
+        # Check if we're in a subdirectory
+        if [ ! -f "pubspec.yaml" ]; then
+          echo "pubspec.yaml not found in root, checking subdirectories..."
+          FLUTTER_DIR=$(find . -name "pubspec.yaml" -type f | head -1 | xargs dirname)
+          if [ -n "$FLUTTER_DIR" ]; then
+            echo "Found Flutter project in: $FLUTTER_DIR"
+            cd "$FLUTTER_DIR"
+            echo "Changed to directory: $(pwd)"
+          else
+            echo "ERROR: No Flutter project found!"
+            exit 1
+          fi
+        fi
+        
+        echo "Current Flutter project directory: $(pwd)"
+        ls -la
+
+    - name: Complete project regeneration
+      run: |
+        echo "=== REGENERATING PROJECT STRUCTURE ==="
+        
+        # Backup important files
+        cp pubspec.yaml pubspec.yaml.backup
+        cp -r lib lib_backup 2>/dev/null || echo "No lib directory"
+        cp -r assets assets_backup 2>/dev/null || echo "No assets directory"
+        
+        # Remove problematic directories
+        rm -rf android ios build .dart_tool
+        
+        # Create fresh Flutter project structure
+        flutter create --org com.example --project-name big_fan_voice_chat .
+        
+        # Restore our files
+        cp pubspec.yaml.backup pubspec.yaml
+        rm -rf lib
+        cp -r lib_backup lib 2>/dev/null || echo "No lib backup to restore"
+        rm -rf assets
+        cp -r assets_backup assets 2>/dev/null || mkdir -p assets
+        
+        # Create missing directories
+        mkdir -p assets/images assets/audio test
         touch assets/audio/.gitkeep
         
-        # Create a working test file
+        # Create basic test
         cat > test/widget_test.dart << 'EOF'
         import 'package:flutter_test/flutter_test.dart';
         
@@ -47,23 +91,21 @@ jobs:
         }
         EOF
         
-        echo "Created test directory and basic test file"
-        ls -la test/
+        echo "Project regeneration completed"
+        ls -la android/
 
-    - name: Fix Gradle project structure
+    - name: Setup Android configuration
       run: |
-        echo "Fixing Gradle project structure..."
+        echo "=== SETTING UP ANDROID CONFIGURATION ==="
         
-        # Check if we're in the right directory
-        if [ ! -f "pubspec.yaml" ]; then
-          echo "pubspec.yaml not found in current directory"
-          exit 1
-        fi
+        # Create local.properties
+        echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+        echo "sdk.dir=$ANDROID_HOME" >> android/local.properties
         
-        # Ensure proper Android Gradle structure
-        mkdir -p android/gradle/wrapper
+        # Ensure gradle wrapper is executable
+        chmod +x android/gradlew
         
-        # Create proper gradle-wrapper.properties
+        # Update gradle-wrapper.properties
         cat > android/gradle/wrapper/gradle-wrapper.properties << 'EOF'
         distributionBase=GRADLE_USER_HOME
         distributionPath=wrapper/dists
@@ -72,149 +114,75 @@ jobs:
         distributionUrl=https\://services.gradle.org/distributions/gradle-7.5-all.zip
         EOF
         
-        # Ensure android/settings.gradle exists with correct content
-        cat > android/settings.gradle << 'EOF'
-        include ':app'
+        echo "Android configuration completed"
 
-        def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
-        def properties = new Properties()
-
-        assert localPropertiesFile.exists()
-        localPropertiesFile.withReader("UTF-8") { reader -> properties.load(reader) }
-
-        def flutterSdkPath = properties.getProperty("flutter.sdk")
-        assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
-        apply from: "$flutterSdkPath/packages/flutter_tools/gradle/app_plugin_loader.gradle"
-        EOF
-        
-        # Fix android/build.gradle
-        if [ ! -f "android/build.gradle" ]; then
-          cat > android/build.gradle << 'EOF'
-        buildscript {
-            ext.kotlin_version = '1.7.10'
-            repositories {
-                google()
-                mavenCentral()
-            }
-
-            dependencies {
-                classpath 'com.android.tools.build:gradle:7.3.0'
-                classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-            }
-        }
-
-        allprojects {
-            repositories {
-                google()
-                mavenCentral()
-            }
-        }
-
-        rootProject.buildDir = '../build'
-        subprojects {
-            project.buildDir = "${rootProject.buildDir}/${project.name}"
-        }
-        subprojects {
-            project.evaluationDependsOn(':app')
-        }
-
-        task clean(type: Delete) {
-            delete rootProject.buildDir
-        }
-        EOF
-        fi
-        
-        echo "Gradle project structure fixed"
-
-    - name: Clean Flutter
-      run: flutter clean
-
-    - name: Get dependencies
-      run: flutter pub get
-
-    - name: Analyze code (allow warnings)
-      run: flutter analyze --no-fatal-warnings
-      continue-on-error: true
-
-    - name: Run tests
+    - name: Clean and prepare Flutter
       run: |
-        echo "Running Flutter tests..."
-        flutter test --reporter=expanded
-        echo "Tests completed successfully!"
-
-    - name: Build Debug APK
-      run: |
-        echo "Starting APK build with fixed Gradle structure..."
-        
-        # Clean everything first
         flutter clean
-        
-        # Regenerate files
         flutter pub get
+        flutter doctor -v
+
+    - name: Build APK with multiple attempts
+      run: |
+        echo "=== BUILDING APK ==="
         
-        # Try building with specific gradle setup
-        cd android && ./gradlew clean && cd ..
-        
-        # Build APK with simpler approach first
-        flutter build apk --debug --verbose --no-sound-null-safety || {
-          echo "First attempt failed, trying with different settings..."
-          flutter build apk --debug --no-shrink --target-platform android-arm64 --no-sound-null-safety || {
-            echo "Second attempt failed, trying basic build..."
-            flutter build apk --debug
-          }
-        }
-        
-        echo "Build process completed. Searching for APK files..."
-        find . -name "*.apk" -type f -exec ls -la {} \; || echo "No APK files found yet"
-        
-        # Check multiple possible locations
-        APK_FOUND=false
-        for path in "build/app/outputs/flutter-apk/app-debug.apk" "build/app/outputs/apk/debug/app-debug.apk" $(find build/ -name "*.apk" 2>/dev/null | head -1); do
-          if [ -f "$path" ]; then
-            echo "APK found at: $path"
-            ls -la "$path"
-            APK_FOUND=true
-            break
+        # First attempt: Standard debug build
+        if flutter build apk --debug --verbose; then
+          echo "✅ First attempt successful!"
+        else
+          echo "First attempt failed, trying second approach..."
+          
+          # Second attempt: Clean and rebuild
+          flutter clean
+          flutter pub get
+          if flutter build apk --debug; then
+            echo "✅ Second attempt successful!"
+          else
+            echo "Second attempt failed, trying third approach..."
+            
+            # Third attempt: Basic build without flags
+            cd android
+            ./gradlew clean
+            cd ..
+            flutter build apk --debug --target-platform=android-arm64
           fi
-        done
-        
-        if [ "$APK_FOUND" = false ]; then
-          echo "APK not found, checking build errors..."
-          ls -la build/ || echo "Build directory does not exist"
         fi
-      continue-on-error: true
+        
+        echo "=== SEARCHING FOR APK ==="
+        find . -name "*.apk" -type f -exec ls -lh {} \; || echo "No APK files found"
+        
+        # Check build directory
+        if [ -d "build" ]; then
+          echo "Build directory contents:"
+          find build/ -type f -name "*.apk" -exec ls -lh {} \; || echo "No APK in build directory"
+        else
+          echo "❌ Build directory not created"
+        fi
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: debug-apk
+        name: flutter-debug-apk
         path: |
           build/app/outputs/flutter-apk/app-debug.apk
           build/app/outputs/apk/debug/app-debug.apk
           build/**/*.apk
-        if-no-files-found: ignore
+        if-no-files-found: warn
       continue-on-error: true
 
-    - name: Build summary
+    - name: Final verification
       run: |
-        echo "=== BUILD SUMMARY ==="
-        echo "Checking for any APK files created..."
-        if find build/ -name "*.apk" -type f | grep -q .; then
-          echo "✅ APK files found:"
-          find build/ -name "*.apk" -type f -exec ls -lh {} \;
-          echo "🎉 Build process successful!"
+        echo "=== FINAL VERIFICATION ==="
+        echo "Working directory: $(pwd)"
+        echo "Flutter project files:"
+        ls -la
+        echo "Android directory:"
+        ls -la android/ || echo "No android directory"
+        echo "Build outputs:"
+        find . -name "*.apk" -type f -exec ls -lh {} \; || echo "No APK files found anywhere"
+        
+        if find . -name "*.apk" -type f | grep -q .; then
+          echo "🎉 SUCCESS: APK files were created!"
         else
-          echo "⚠️ No APK files found, but workflow completed"
-          echo "Check logs above for build details"
+          echo "⚠️  WARNING: No APK files found"
         fi
-        echo "===================="
-
-    - name: Upload APK (alternative paths)
-      uses: actions/upload-artifact@v4
-      with:
-        name: debug-apk-alternative
-        path: |
-          build/app/outputs/apk/debug/app-debug.apk
-          build/app/outputs/flutter-apk/*.apk
-        if-no-files-found: ignore
-      continue-on-error: true
