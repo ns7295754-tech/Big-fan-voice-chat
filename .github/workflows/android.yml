@@ -1,4 +1,4 @@
-name: Build Release APK
+name: Build APK
 
 on:
   push:
@@ -10,6 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
     - name: Checkout repository
@@ -26,6 +27,7 @@ jobs:
       with:
         flutter-version: '3.24.0'
         channel: 'stable'
+        cache: true
 
     - name: Flutter doctor
       run: flutter doctor -v
@@ -36,26 +38,12 @@ jobs:
     - name: Get dependencies
       run: flutter pub get
 
-    - name: Decode keystore
-      if: github.event_name != 'pull_request'
-      run: |
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+    - name: Build debug APK (test)
+      run: flutter build apk --debug
 
-    - name: Create key.properties
-      if: github.event_name != 'pull_request'
-      run: |
-        echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
-        echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
-        echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
-        echo "storeFile=keystore.jks" >> android/key.properties
-
-    - name: Build release APK
-      run: flutter build apk --release --verbose
-
-    - name: Upload APK artifact
+    - name: Upload debug APK
       uses: actions/upload-artifact@v4
-      if: github.event_name != 'pull_request'
       with:
-        name: release-apk
-        path: build/app/outputs/flutter-apk/app-release.apk
-        retention-days: 30
+        name: debug-apk
+        path: build/app/outputs/flutter-apk/app-debug.apk
+        retention-days: 7
